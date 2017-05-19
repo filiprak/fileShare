@@ -1,6 +1,9 @@
 /*
  * localFileList.h
  *
+ *	List of files that are existing locally on this host
+ *	it could be downloaded files or added by this host
+ *
  *  Created on: 17.05.2017
  *      Author: raqu
  */

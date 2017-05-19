@@ -1,6 +1,8 @@
 /*
  * filesystem.h
  *
+ *	Helps with handling file read and write on hard drive
+ *
  *  Created on: 17.05.2017
  *      Author: raqu
  */

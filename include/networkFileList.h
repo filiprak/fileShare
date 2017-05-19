@@ -1,6 +1,9 @@
 /*
  * networkFileList.h
  *
+ * List of all files available in network at the moment
+ * this list is synchronized beetween peers very often
+ *
  *  Created on: 17.05.2017
  *      Author: raqu
  */
