@@ -2,6 +2,11 @@
 ###########################################################
 CXX ?= g++
 
+# output colors
+RED=\033[0;31m
+GREEN=\033[0;32m
+NC=\033[0m
+
 # path #
 SRC_PATH = src
 BUILD_PATH = build
@@ -28,7 +33,9 @@ DEPS = $(OBJECTS:.o=.d)
 
 # flags #
 COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g
+LINKER_FLAGS = -lpthread
 INCLUDES = -I include/
+
 # Space-separated pkg-config libraries used by this project
 LIBS =
 
@@ -39,6 +46,7 @@ default_target: release
 release: export CXXFLAGS := $(CXXFLAGS) $(COMPILE_FLAGS)
 release: dirs
 	@$(MAKE) all
+	@echo "$(GREEN)$(BOLD)Compilation successful... executable path: $(BIN_PATH)/$(BIN_NAME) $(NC)"
 
 .PHONY: dirs
 dirs:
@@ -60,11 +68,11 @@ all: $(BIN_PATH)/$(BIN_NAME)
 	@echo "Making symlink: $(BIN_NAME) -> $<"
 	@$(RM) $(BIN_NAME)
 	@ln -s $(BIN_PATH)/$(BIN_NAME) $(BIN_NAME)
-
+	
 # Creation of the executable
 $(BIN_PATH)/$(BIN_NAME): $(OBJECTS)
 	@echo "Linking: $@"
-	$(CXX) $(OBJECTS) -o $@
+	$(CXX) $(OBJECTS) $(LINKER_FLAGS) -o $@
 
 # Add dependency files, if they exist
 -include $(DEPS)
@@ -75,5 +83,4 @@ $(BIN_PATH)/$(BIN_NAME): $(OBJECTS)
 $(BUILD_PATH)/%.o: $(SRC_PATH)/%.$(SRC_EXT)
 	@echo "Compiling: $< -> $@"
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -MP -MMD -c $< -o $@
-	
 	
