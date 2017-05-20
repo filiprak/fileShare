@@ -7,8 +7,9 @@
 
 #include "message.h"
 
-Message::Message() {
+Message::Message(string type) {
 	// TODO Auto-generated constructor stub
+
 
 }
 

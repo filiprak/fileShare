@@ -6,13 +6,14 @@
  */
 
 #include "listener.h"
+#include "network_task.h"
 
-Listener::Listener() {
+Listener::Listener() : NetworkTask() {
 	// TODO Auto-generated constructor stub
 
 }
 
-Listener::~Listener() {
+Listener::~Listener(){
 	// TODO Auto-generated destructor stub
 
 }

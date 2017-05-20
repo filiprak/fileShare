@@ -11,12 +11,18 @@
 #ifndef LOGIC_LISTENER_H_
 #define LOGIC_LISTENER_H_
 
-class Listener: public NetworkTask {
+#include <network_task.h>
+
+class Listener : public NetworkTask {
 public:
 	Listener();
 	virtual ~Listener();
 
+	int listen();
 
 };
+
+// listener thread main function
+void listenerThread();
 
 #endif /* LOGIC_LISTENER_H_ */

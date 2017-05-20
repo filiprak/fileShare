@@ -12,6 +12,7 @@
 #ifndef INCLUDE_NETWORK_TASK_H_
 #define INCLUDE_NETWORK_TASK_H_
 
+#include <network.h>
 
 class NetworkTask {
 private:
@@ -19,8 +20,8 @@ private:
 	Network network;
 
 public:
-	NetworkTask();
-	virtual ~NetworkTask();
+	NetworkTask() {};
+	virtual ~NetworkTask() {};
 
 	// runs network task
 	virtual int run() = 0;
