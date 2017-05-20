@@ -11,32 +11,54 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include <deque>
+#include <queue>
 
 
 
-template <typename T>
-class BlockingQueue {
+template <class T> class BlockingQueue: public std::queue<T> {
+
 private:
-    std::mutex              d_mutex;
-    std::condition_variable d_condition;
-    std::deque<T>           d_queue;
-public:
+    unsigned maxSize;
+    bool blockPush;
+    std::mutex readerMutex;
+    std::mutex writerMutex;
+    std::condition_variable isFull;
+    std::condition_variable isEmpty;
 
-    void push(T const& value) {
-        {
-            std::unique_lock<std::mutex> lock(this->d_mutex);
-            d_queue.push_front(value);
-        }
-        this->d_condition.notify_one();
-    }
+public:
+	BlockingQueue(int size, bool blockPush) {
+		this->maxSize = size;
+		this->blockPush = blockPush;
+	}
+
+	bool push(T item) {
+		std::unique_lock<std::mutex> wlck(writerMutex);
+		if(! this->blockPush && Full()) return false;
+		while(Full())
+			isFull.wait(wlck);
+		std::queue<T>::push(item);
+		isEmpty.notify_all();
+		return true;
+	}
+
+	bool notEmpty() {
+		return !std::queue<T>::empty();
+	}
+
+	bool Full(){
+		return std::queue<T>::size() >= maxSize;
+	}
 
     T pop() {
-        std::unique_lock<std::mutex> lock(this->d_mutex);
-        this->d_condition.wait(lock, [=]{ return !this->d_queue.empty(); });
-        T rc(std::move(this->d_queue.back()));
-        this->d_queue.pop_back();
-        return rc;
+    	std::unique_lock<std::mutex> lck(readerMutex);
+        while(std::queue<T>::empty()) {
+            isEmpty.wait(lck);
+        }
+        T value = std::queue<T>::front();
+        std::queue<T>::pop();
+        if(!Full())
+            isFull.notify_all();
+        return value;
     }
 };
 
