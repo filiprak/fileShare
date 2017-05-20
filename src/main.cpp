@@ -15,30 +15,17 @@
 #include <cstdio>
 #include <ctime>
 #include <unistd.h>
-
-void producent(BlockingQueue<int>* q) {
-	for (int i = 0; i < 10; ++i) {
-			unsigned int t = rand()%3;
-			for (int j=0; j<3; ++j) {
-				int el = rand()%20 + 10000;
-				q->push(el);
-			}
-			sleep(t);
-		}
-}
+#include "listener.h"
+#include "common.h"
 
 int main() {
-	srand( time( NULL ) );
+	Controller controller;
 
-	BlockingQueue<int> queue(2, false);
+	std::thread listenerT(listenerThread);
 
-	std::thread prodthread(producent, &queue);
+	controller.run();
 
-	for (int i = 0; i < 10; ++i) {
-		int elem = queue.pop();
-	}
-
-	prodthread.join();
+	listenerT.join();
 
 	return 0;
 }

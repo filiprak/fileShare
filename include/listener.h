@@ -14,12 +14,15 @@
 #include <network_task.h>
 
 class Listener : public NetworkTask {
+private:
+	bool listening = false;
+
 public:
 	Listener();
 	virtual ~Listener();
 
-	int listen();
-
+	int run() override;
+	void stop();
 };
 
 // listener thread main function

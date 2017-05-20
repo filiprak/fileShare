@@ -137,4 +137,7 @@ public:
 	virtual const char* jsonify() const override;
 };
 
+// function creates message object from
+Message* parseJSONtoMessage(string json);
+
 #endif /* NETWORK_MESSAGE_H_ */

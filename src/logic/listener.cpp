@@ -18,3 +18,11 @@ Listener::~Listener(){
 
 }
 
+int Listener::run() {
+
+}
+
+void listenerThread() {
+	Listener listener;
+	listener.run();
+}

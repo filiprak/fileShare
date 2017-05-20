@@ -6,6 +6,10 @@
  */
 
 #include "network.h"
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <netinet/in.h>
 
 Network::Network() {
 	// TODO Auto-generated constructor stub
