@@ -12,9 +12,13 @@
 #define NETWORK_NETWORK_H_
 
 #include <string>
-
+#include <netdb.h>
 
 class Network {
+private:
+	char broadcast_addr[NI_MAXHOST];
+	char my_ipv4_addr[NI_MAXHOST];
+
 public:
 	Network();
 	virtual ~Network();
@@ -63,5 +67,6 @@ public:
 	void stop();
 };
 
+int getIfaceInfo(const char* iface, char* addr, bool braddr=false);
 
 #endif /* NETWORK_NETWORK_H_ */
