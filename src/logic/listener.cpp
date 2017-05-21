@@ -7,10 +7,12 @@
 
 #include "listener.h"
 #include "network_task.h"
+#include "blockingQueue.h"
+#include "message.h"
 
-Listener::Listener() : NetworkTask() {
-	// TODO Auto-generated constructor stub
+#include <unistd.h>
 
+Listener::Listener(BlockingQueue<Message>& q) : NetworkTask(), mqueue(q) {
 }
 
 Listener::~Listener(){
@@ -19,10 +21,20 @@ Listener::~Listener(){
 }
 
 int Listener::run() {
+	listening = true;
+	while(listening) {
 
+		printf("listening\n");
+		usleep(500000);
+	}
+	return 0;
 }
 
-void listenerThread() {
-	Listener listener;
+void Listener::stop() {
+	listening = false;
+}
+
+void listenerThread(BlockingQueue<Message>& q, Listener& listener) {
 	listener.run();
 }
+

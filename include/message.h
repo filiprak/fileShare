@@ -22,9 +22,6 @@ public:
 
 	Message(string type);
 	virtual ~Message();
-
-	// generates json format of message
-	virtual const char* jsonify() const = 0;
 };
 
 class MessageGREETING: public Message {
@@ -34,7 +31,7 @@ public:
 	virtual ~MessageGREETING();
 
 	// generates json format of message
-	virtual const char* jsonify() const override;
+	virtual const char* jsonify() const;
 };
 
 class MessageRESPLIST: public Message {
@@ -44,7 +41,7 @@ public:
 	virtual ~MessageRESPLIST();
 
 	// generates json format of message
-	virtual const char* jsonify() const override;
+	virtual const char* jsonify() const;
 };
 
 class MessageREQLIST: public Message {
@@ -54,7 +51,7 @@ public:
 	virtual ~MessageREQLIST();
 
 	// generates json format of message
-	virtual const char* jsonify() const override;
+	virtual const char* jsonify() const;
 };
 
 class MessageREQFILE: public Message {
@@ -64,7 +61,7 @@ public:
 	virtual ~MessageREQFILE();
 
 	// generates json format of message
-	virtual const char* jsonify() const override;
+	virtual const char* jsonify() const;
 };
 
 class MessageRESPFILE: public Message {
@@ -74,7 +71,7 @@ public:
 	virtual ~MessageRESPFILE();
 
 	// generates json format of message
-	virtual const char* jsonify() const override;
+	virtual const char* jsonify() const;
 };
 
 class MessageREQFDATA: public Message {
@@ -84,7 +81,7 @@ public:
 	virtual ~MessageREQFDATA();
 
 	// generates json format of message
-	virtual const char* jsonify() const override;
+	virtual const char* jsonify() const;
 };
 
 class MessageADDFILE: public Message {
@@ -94,7 +91,7 @@ public:
 	virtual ~MessageADDFILE();
 
 	// generates json format of message
-	virtual const char* jsonify() const override;
+	virtual const char* jsonify() const;
 };
 
 class MessageDELFILE: public Message {
@@ -104,7 +101,7 @@ public:
 	virtual ~MessageDELFILE();
 
 	// generates json format of message
-	virtual const char* jsonify() const override;
+	virtual const char* jsonify() const;
 };
 
 class MessageREVFILE: public Message {
@@ -114,7 +111,7 @@ public:
 	virtual ~MessageREVFILE();
 
 	// generates json format of message
-	virtual const char* jsonify() const override;
+	virtual const char* jsonify() const;
 };
 
 class MessageLOCFILE: public Message {
@@ -124,7 +121,7 @@ public:
 	virtual ~MessageLOCFILE();
 
 	// generates json format of message
-	virtual const char* jsonify() const override;
+	virtual const char* jsonify() const;
 };
 
 class MessageUNLOCFILE: public Message {
@@ -134,7 +131,7 @@ public:
 	virtual ~MessageUNLOCFILE();
 
 	// generates json format of message
-	virtual const char* jsonify() const override;
+	virtual const char* jsonify() const;
 };
 
 // function creates message object from

@@ -20,3 +20,38 @@ Network::~Network() {
 	// TODO Auto-generated destructor stub
 }
 
+void Network::sendUDP(const char* data, std::string ipv4, int port) {
+}
+
+void Network::broadcastUDP(const char* data, int port) {
+}
+
+TCPlistener::TCPlistener() {
+}
+
+TCPlistener::~TCPlistener() {
+}
+
+void TCPlistener::init() {
+}
+
+int TCPlistener::run() {
+}
+
+void TCPlistener::stop() {
+}
+
+UDPlistener::UDPlistener() {
+}
+
+UDPlistener::~UDPlistener() {
+}
+
+void UDPlistener::init() {
+}
+
+int UDPlistener::run() {
+}
+
+void UDPlistener::stop() {
+}

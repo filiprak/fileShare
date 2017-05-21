@@ -11,6 +11,9 @@
 #ifndef NETWORK_NETWORK_H_
 #define NETWORK_NETWORK_H_
 
+#include <string>
+
+
 class Network {
 public:
 	Network();
@@ -21,12 +24,44 @@ public:
 	// broadcast single udp datagram
 	void broadcastUDP(const char* data, int port);
 	// connect and send tcp data
-	void sendTCP(const char* data, std::string ipv4, int port);
+	void sendTCP(const char* data, std::string ipv4, int port, unsigned timeout);
 
 	// open tcp listen socket on any free port
-	void listenTCP(const char* data, std::string ipv4, int* port);
+	void listenTCP(const char* data, std::string ipv4, int* port, unsigned timeout);
 	// receive one or several udp datagrams
-	void listenUDP(const char* data, std::string ipv4, int* port);
+	void listenUDP(const char* data, std::string ipv4, int* port, unsigned timeout);
+
 };
+
+// listener of tcp datagrams
+class TCPlistener {
+private:
+	bool listening = false;
+	int port;
+
+public:
+	TCPlistener();
+	virtual ~TCPlistener();
+
+	void init();
+	int run();
+	void stop();
+};
+
+// listener of udp datagrams
+class UDPlistener {
+private:
+	bool listening = false;
+	int port;
+
+public:
+	UDPlistener();
+	virtual ~UDPlistener();
+
+	void init();
+	int run();
+	void stop();
+};
+
 
 #endif /* NETWORK_NETWORK_H_ */

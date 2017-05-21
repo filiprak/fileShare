@@ -10,10 +10,6 @@
 
 #define MESS_QUEUE_SIZE 256
 
-#include <blockingQueue.h>
-
-
-BlockingQueue<Message> messageQueue(MESS_QUEUE_SIZE, false);
 
 
 #endif /* INCLUDE_COMMON_H_ */

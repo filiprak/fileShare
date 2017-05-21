@@ -11,16 +11,17 @@
 #include "common.h"
 
 
-Controller::Controller() {
-	// TODO Auto-generated constructor stub
+Controller::Controller(BlockingQueue<Message>& q) : mqueue(q) {
 
 }
 
 Controller::~Controller() {
 	// TODO Auto-generated destructor stub
+
 }
 
 void Controller::run() {
+
 }
 
 void greetingThread() {

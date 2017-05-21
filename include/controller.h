@@ -11,11 +11,15 @@
 #ifndef LOGIC_CONTROLLER_H_
 #define LOGIC_CONTROLLER_H_
 
-#include <message.h>
+#include "message.h"
+#include "blockingQueue.h"
 
 class Controller {
+private:
+	BlockingQueue<Message>& mqueue;
+
 public:
-	Controller();
+	Controller(BlockingQueue<Message>& q);
 	virtual ~Controller();
 
 	void run();

@@ -9,24 +9,30 @@
 
 #include <iostream>
 #include <thread>
-#include <blockingQueue.h>
-
-#include <cstdlib>
-#include <cstdio>
-#include <ctime>
 #include <unistd.h>
+
+#include "blockingQueue.h"
 #include "listener.h"
 #include "common.h"
+#include "controller.h"
+#include "message.h"
 
 int main() {
-	Controller controller;
+	BlockingQueue<Message> messageQueue(MESS_QUEUE_SIZE, false);
+	Controller controller(messageQueue);
+	Listener listener(messageQueue);
 
-	std::thread listenerT(listenerThread);
+	// run listener thread
+	std::thread listenerT(listenerThread, std::ref(messageQueue), std::ref(listener));
+
+
+	sleep(3);
+	listener.stop();
 
 	controller.run();
 
+	// join listener thread
 	listenerT.join();
-
 	return 0;
 }
 
