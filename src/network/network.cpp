@@ -5,19 +5,24 @@
  *      Author: raqu
  */
 
-#include "network.h"
-#include "common.h"
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <asm-generic/socket.h>
+#include <common.h>
+#include <utilFunctions.h>
 #include <errno.h>
-#include <string.h>
-#include <stdexcept>
-#include <unistd.h>
 #include <ifaddrs.h>
+#include <netinet/in.h>
+#include <network.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <thread>
+#include <unistd.h>
+#include <cstdio>
+#include <stdexcept>
+
+char Network::broadcast_addr[];
+char Network::my_ipv4_addr[];
 
 // helper function to determine local ipv4 address
 int getIfaceInfo(const char* iface, char* addr, bool braddr) {
@@ -70,11 +75,15 @@ int getIfaceInfo(const char* iface, char* addr, bool braddr) {
 	return -1;
 }
 
-Network::Network() {
+void Network::initMyAddress() {
 	if( getIfaceInfo(NET_IFACE, my_ipv4_addr) != 0)
-		throw std::runtime_error("Cannot find interface IPv4 address");
+		throw std::runtime_error(strError("Cannot find interface IPv4 address", __FUNCTION__));
 	if( getIfaceInfo(NET_IFACE, broadcast_addr, true) != 0)
-		throw std::runtime_error("Cannot determine broadcast address");
+		throw std::runtime_error(strError("Cannot determine broadcast address", __FUNCTION__));
+}
+
+Network::Network() {
+
 }
 
 Network::~Network() {
@@ -103,19 +112,20 @@ void Network::sendUDP(const char* data, const char* ipv4, int port) {
 	 * immediately
 	 */
 	if (udpsock == -1) {
-		throw std::runtime_error( strerror(errno) );
+		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
 	}
 
 	/* Send another packet to the destination specified above */
 	if ((numbytes=sendto(udpsock, data, strlen(data), 0,
 	    (struct sockaddr *) &destAddr, sizeof destAddr)) == -1) {
 		close(udpsock);
-		throw std::runtime_error( strerror(errno) );
+		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
 	}
 
 	if (numbytes < strlen(data)) {
 		close(udpsock);
-		throw std::runtime_error("Some data was lost while sending UDP datagram");
+		throw std::runtime_error( strError("Some data was lost while sending UDP datagram",
+				__FUNCTION__) );
 	}
 
 	printf("UDP datagram was sent, nr bytes: %d\n", numbytes);
@@ -144,21 +154,21 @@ void Network::broadcastUDP(const char* data, int port) {
 	 * immediately
 	 */
 	if (udpsock == -1) {
-		throw std::runtime_error( strerror(errno) );
+		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
 	}
 
 	// this call is what allows broadcast packets to be sent:
 	if (setsockopt(udpsock, SOL_SOCKET, SO_BROADCAST, &broadcast,
 		sizeof broadcast) == -1) {
 		close(udpsock);
-		throw std::runtime_error( strerror(errno) );
+		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
 	}
 
 	/* Send another packet to the destination specified above */
 	if ((numbytes=sendto(udpsock, data, strlen(data), 0,
 	    (struct sockaddr *) &destAddr, sizeof destAddr)) == -1) {
 		close(udpsock);
-		throw std::runtime_error( strerror(errno) );
+		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
 	}
 
 	if (numbytes < strlen(data)) {
@@ -180,6 +190,7 @@ void TCPlistener::init() {
 }
 
 int TCPlistener::run() {
+
 }
 
 void TCPlistener::stop() {
@@ -191,11 +202,88 @@ UDPlistener::UDPlistener() {
 UDPlistener::~UDPlistener() {
 }
 
-void UDPlistener::init() {
+void UDPlistener::init(unsigned timeout, int forceport) {
+	if (listening)
+		throw std::runtime_error( strError("UDP socket is listening now, attepmt to reinitialize existing socket",
+				__FUNCTION__) );
+
+	close(udpsock);
+	receivedUDPs.clear();
+
+	struct timeval tv;
+	tv.tv_sec = timeout;  /* Secs Timeout */
+	tv.tv_usec = 0;  // Not init'ing this can cause strange errors
+
+	struct sockaddr_in addr;
+	memset(&addr, 0, sizeof addr);
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_port = htons(forceport);
+
+	if ( ( udpsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP) ) == -1 )
+		throw std::runtime_error(strError("Failed to create UDPlistener socket",
+				__FUNCTION__) );
+
+	int err = setsockopt(udpsock, SOL_SOCKET, SO_RCVTIMEO,
+			(const char*) &tv, sizeof(struct timeval));
+	if (err == -1) {
+		close(udpsock);
+		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
+	}
+
+	if (bind(udpsock, (struct sockaddr*) &addr, sizeof addr) == -1) {
+		close(udpsock);
+		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
+	}
+
+	unsigned length = sizeof addr;
+	if ( getsockname(udpsock, (struct sockaddr*) &addr, &length) == -1 ) {
+		close(udpsock);
+		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
+	}
+
+	// save port number
+	port = ntohs(addr.sin_port);
 }
 
-int UDPlistener::run() {
+int UDPlistener::run(int nr_dgrams) {
+	struct sockaddr_storage their_addr;
+	socklen_t addr_len = sizeof their_addr;
+	int numbytes;
+
+	listening = true;
+	while (listening && (nr_dgrams > 0)) {
+		char buf[MAX_DGRAM_LEN];
+		if ( (numbytes = recvfrom(udpsock,
+								buf,
+								MAX_DGRAM_LEN - 1,
+								0,
+								(struct sockaddr *)&their_addr,
+								&addr_len) ) == -1) {
+			continue;
+			//throw std::runtime_error("Failed to receive UDP datagram");
+		} else {
+			struct sockaddr_in* their_addr_in = (struct sockaddr_in *) &their_addr;
+			std::string their_str(inet_ntoa(their_addr_in->sin_addr));
+			std::string datagram(buf);
+
+			// save received datagram
+			receivedUDPs[their_str] = datagram;
+			nr_dgrams--;
+		}
+	}
+	listening = false;
+	close(udpsock);
+	return 0;
 }
 
 void UDPlistener::stop() {
+	listening = false;
 }
+
+std::thread Network::listenUDP(unsigned timeout, int nr_dgrams, int forceport) {
+	udplisten.init(timeout, forceport);
+	return std::thread( [=] { udplisten.run(nr_dgrams); } );
+}
+
+
