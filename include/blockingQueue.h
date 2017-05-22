@@ -12,12 +12,14 @@
 #include <mutex>
 #include <condition_variable>
 #include <queue>
+#include <utility>
 
 
-
-template <class T> class BlockingQueue: public std::queue<T> {
+template <class T> class BlockingQueue {
 
 private:
+	std::queue<T> queue;
+
     unsigned maxSize;
     bool blockPush;
     std::mutex readerMutex;
@@ -26,39 +28,43 @@ private:
     std::condition_variable isEmpty;
 
 public:
-	BlockingQueue(int size, bool blockPush) {
+	BlockingQueue(int size, bool blockPush=false) {
 		this->maxSize = size;
 		this->blockPush = blockPush;
 	}
 
-	bool push(T item) {
+	bool insert(T item) {
 		std::unique_lock<std::mutex> wlck(writerMutex);
 		if(! this->blockPush && Full()) return false;
 		while(Full())
 			isFull.wait(wlck);
-		std::queue<T>::push(item);
+		queue.push(item);
 		isEmpty.notify_all();
 		return true;
 	}
 
 	bool notEmpty() {
-		return !std::queue<T>::empty();
+		return !queue.empty();
 	}
 
 	bool Full(){
-		return std::queue<T>::size() >= maxSize;
+		return queue.size() >= maxSize;
 	}
 
-    T pop() {
+    T take() {
     	std::unique_lock<std::mutex> lck(readerMutex);
-        while(std::queue<T>::empty()) {
+        while(queue.empty()) {
             isEmpty.wait(lck);
         }
-        T value = std::queue<T>::front();
-        std::queue<T>::pop();
+        T value = queue.front();
+        queue.pop();
         if(!Full())
             isFull.notify_all();
         return value;
+    }
+
+    void clear() {
+    	std::queue<T>().swap(queue);
     }
 };
 

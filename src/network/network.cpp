@@ -82,7 +82,7 @@ void Network::initMyAddress() {
 		throw std::runtime_error(strError("Cannot determine broadcast address", __FUNCTION__));
 }
 
-Network::Network() {
+Network::Network() : udplisten(UDP_QUEUE_SIZE) {
 
 }
 
@@ -196,7 +196,7 @@ int TCPlistener::run() {
 void TCPlistener::stop() {
 }
 
-UDPlistener::UDPlistener() {
+UDPlistener::UDPlistener(unsigned qsize) : receivedUDPs(qsize) {
 }
 
 UDPlistener::~UDPlistener() {
@@ -265,10 +265,11 @@ int UDPlistener::run(int nr_dgrams) {
 		} else {
 			struct sockaddr_in* their_addr_in = (struct sockaddr_in *) &their_addr;
 			std::string their_str(inet_ntoa(their_addr_in->sin_addr));
-			std::string datagram(buf);
+			std::string datagram(buf, numbytes);
 
 			// save received datagram
-			receivedUDPs[their_str] = datagram;
+			std::pair<std::string, std::string> datagram_pair(their_str, datagram);
+			receivedUDPs.insert( datagram_pair );
 			nr_dgrams--;
 		}
 	}

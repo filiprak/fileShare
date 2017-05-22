@@ -11,16 +11,16 @@
 #ifndef NETWORK_NETWORK_H_
 #define NETWORK_NETWORK_H_
 
+#include <utility>
 #include <string>
 #include <netdb.h>
-#include <map>
 #include <thread>
+#include <blockingQueue.h>
 
 // listener of tcp datagrams
 class TCPlistener {
 private:
-	// map: key = sender address, value = received bytes
-	std::map<std::string, std::string> receivedUDPs;
+
 	bool listening = false;
 	// port of listener socket
 	int port;
@@ -37,8 +37,8 @@ public:
 // listener of udp datagrams
 class UDPlistener {
 private:
-	// map: key = sender address, value = received bytes
-	std::map<std::string, std::string> receivedUDPs;
+	// pair: key = sender address, value = received bytes
+	BlockingQueue< std::pair<std::string, std::string> > receivedUDPs;
 	bool listening = false;
 	// port of listener socket
 	int port;
@@ -47,7 +47,7 @@ private:
 	int udpsock;
 
 public:
-	UDPlistener();
+	UDPlistener(unsigned qsize);
 	virtual ~UDPlistener();
 
 	void init(unsigned timeout, int forceport=0);
@@ -58,7 +58,7 @@ public:
 		return port;
 	}
 
-	const std::map<std::string, std::string>& getReceivedUdPs() const {
+	BlockingQueue< std::pair<std::string, std::string> >& getReceivedUdPs() {
 		return receivedUDPs;
 	}
 };
