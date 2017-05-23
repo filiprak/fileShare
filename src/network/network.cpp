@@ -252,8 +252,10 @@ int UDPlistener::run(int nr_dgrams) {
 	socklen_t addr_len = sizeof their_addr;
 	int numbytes;
 
+	bool infinite = (nr_dgrams <= 0);
+
 	listening = true;
-	while (listening && (nr_dgrams > 0)) {
+	while (listening && (infinite || nr_dgrams > 0)) {
 		char buf[MAX_DGRAM_LEN];
 		memset(buf, 0, sizeof buf);
 
@@ -272,7 +274,8 @@ int UDPlistener::run(int nr_dgrams) {
 
 			// save received datagram
 			receivedUDPs.insert( dgram );
-			nr_dgrams--;
+			if (!infinite)
+				nr_dgrams--;
 		}
 	}
 	listening = false;
@@ -280,13 +283,17 @@ int UDPlistener::run(int nr_dgrams) {
 	return 0;
 }
 
+bool UDPlistener::isListening() {
+	return listening;
+}
+
 void UDPlistener::stop() {
 	listening = false;
 }
 
-std::thread Network::listenUDP(unsigned timeout, int nr_dgrams, int forceport) {
+void Network::listenUDP(unsigned timeout, int nr_dgrams, int forceport) {
 	udplisten.init(timeout, forceport);
-	return std::thread( [=] { udplisten.run(nr_dgrams); } );
+	udplisten.run(nr_dgrams);
 }
 
 

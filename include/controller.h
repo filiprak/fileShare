@@ -13,19 +13,22 @@
 
 #include "message.h"
 #include "blockingQueue.h"
+#include "listener.h"
+#include <thread>
+#include <vector>
 
 class Controller {
 private:
-	BlockingQueue<Message>& mqueue;
+	vector<std::thread> threads;
 
 public:
-	Controller(BlockingQueue<Message>& q);
+	Controller();
 	virtual ~Controller();
 
 	void run();
 };
 
-/* locally triggered operations (by user commands) */
+/* locally triggered operations (by user commands) handled by Controller */
 
 // greeting thread
 void greetingThread();
@@ -47,36 +50,6 @@ void revokeFileThread();
 
 // delete file thread
 void deleteFileThread();
-
-
-/* remote triggered operations (by remote peer, not local) */
-
-// response on greeting
-void responseGREETINGThread(MessageGREETING& mess);
-
-// response on file request
-void responseREQUFILEThread(MessageREQFILE &mess);
-
-// response on file data request
-void responseREQFDATAThread(MessageREQFDATA &mess);
-
-// response on file list request
-void responseREQLISTThread(MessageREQLIST &mess);
-
-// response on file added
-void responseADDFILEThread(MessageADDFILE &mess);
-
-// response on file deleted
-void responseDELFILEThread(MessageDELFILE &mess);
-
-// response on file revoked
-void responseREVFILEThread(MessageREVFILE &mess);
-
-// response on file locked
-void responseLOCFILEThread(MessageLOCFILE &mess);
-
-// response on file unlocked
-void responseUNLOCFILEThread(MessageUNLOCFILE &mess);
 
 
 #endif /* LOGIC_CONTROLLER_H_ */

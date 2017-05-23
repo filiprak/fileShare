@@ -53,9 +53,10 @@ public:
 
 	void init(unsigned timeout, int forceport=0);
 	int run(int nr_dgrams);
+	bool isListening();
 	void stop();
 
-	int getPort() const {
+	int getPort() {
 		return port;
 	}
 
@@ -90,7 +91,7 @@ public:
 	// open tcp listen socket on any free port
 	void listenTCP(const char* data, const char* ipv4, int* port, unsigned timeout);
 	// receive one or several udp datagrams
-	std::thread listenUDP(unsigned timeout, int nr_dgrams, int forceport=0);
+	void listenUDP(unsigned timeout, int nr_dgrams=0, int forceport=0);
 
 	const char* getMyIpv4Addr() const {
 		return my_ipv4_addr;

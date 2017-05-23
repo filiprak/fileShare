@@ -11,24 +11,27 @@
 #ifndef LOGIC_LISTENER_H_
 #define LOGIC_LISTENER_H_
 
-#include "network_task.h"
 #include "message.h"
 #include "blockingQueue.h"
+#include "network.h"
 
-class Listener : public NetworkTask {
+class Listener {
 private:
-	bool listening = false;
-	BlockingQueue<Message>& mqueue;
+	Network network;
+	BlockingQueue< Message >& messq;
+	bool parsing = false;
 
 public:
-	Listener(BlockingQueue<Message>& q);
+	Listener(BlockingQueue< Message >& q);
 	virtual ~Listener();
 
-	int run() override;
+	int run();
+	void parse();
+	bool isListening();
 	void stop();
 };
 
-// listener thread main function
-void listenerThread(BlockingQueue<Message>& q, Listener& listener);
+void listenerThread(Listener& listener);
+void parserThread(Listener& listener);
 
 #endif /* LOGIC_LISTENER_H_ */

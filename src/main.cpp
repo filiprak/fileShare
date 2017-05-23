@@ -10,6 +10,9 @@
 #include <iostream>
 #include <thread>
 #include <unistd.h>
+#include <string.h>
+
+#include <stdio.h>
 
 #include "blockingQueue.h"
 #include "listener.h"
@@ -19,20 +22,36 @@
 
 int main() {
 	BlockingQueue<Message> messageQueue(MESS_QUEUE_SIZE, false);
-	Controller controller(messageQueue);
+	Controller controller;
 	Listener listener(messageQueue);
 
-	// run listener thread
-	std::thread listenerT(listenerThread, std::ref(messageQueue), std::ref(listener));
+	try {
+		std::cout << "Invocating fileShare..." << std::endl;
+		// get local ipv4 and broadcast address and save it to Network module
+		Network::initMyAddress();
 
+		// run listener thread
+		std::thread br_listenerT(listenerThread, std::ref(listener) );
+		// run listener parser thread
+		std::thread br_parserT(parserThread, std::ref(listener) );
 
-	sleep(3);
-	listener.stop();
+		Message m = messageQueue.take();
+		std::cout << m.sender_ipv4 << ", " << m.type << std::endl;
 
-	controller.run();
+		listener.stop();
 
-	// join listener thread
-	listenerT.join();
+		//listener.stop();
+
+		controller.run();
+
+		//join listeners threads
+		br_listenerT.join();
+		br_parserT.join();
+
+	} catch (const std::exception &e) {
+		std::cout << std::string("Exception occured: ") + std::string(e.what()) << std::endl;
+	}
+
 	return 0;
 }
 

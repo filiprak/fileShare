@@ -11,23 +11,27 @@
 #ifndef NETWORK_MESSAGE_H_
 #define NETWORK_MESSAGE_H_
 
-#include<string>
+#include <string>
+#include "common.h"
+#include "datagram.h"
 
 using namespace std;
 
 class Message {
 public:
+	// ipv4 address of sender
+	string sender_ipv4;
 	// message type: GREETING, RESPFILE, ...
-	string type;
+	MSG_TYPE type;
 
-	Message(string type);
+	Message(MSG_TYPE type, const char* sender_ipv4);
 	virtual ~Message();
 };
 
 class MessageGREETING: public Message {
 public:
 
-	MessageGREETING();
+	MessageGREETING(const char* sender_ipv4);
 	virtual ~MessageGREETING();
 
 	// generates json format of message
@@ -37,7 +41,7 @@ public:
 class MessageRESPLIST: public Message {
 public:
 
-	MessageRESPLIST();
+	MessageRESPLIST(const char* sender_ipv4);
 	virtual ~MessageRESPLIST();
 
 	// generates json format of message
@@ -47,7 +51,7 @@ public:
 class MessageREQLIST: public Message {
 public:
 
-	MessageREQLIST();
+	MessageREQLIST(const char* sender_ipv4);
 	virtual ~MessageREQLIST();
 
 	// generates json format of message
@@ -57,7 +61,7 @@ public:
 class MessageREQFILE: public Message {
 public:
 
-	MessageREQFILE();
+	MessageREQFILE(const char* sender_ipv4);
 	virtual ~MessageREQFILE();
 
 	// generates json format of message
@@ -67,7 +71,7 @@ public:
 class MessageRESPFILE: public Message {
 public:
 
-	MessageRESPFILE();
+	MessageRESPFILE(const char* sender_ipv4);
 	virtual ~MessageRESPFILE();
 
 	// generates json format of message
@@ -77,7 +81,7 @@ public:
 class MessageREQFDATA: public Message {
 public:
 
-	MessageREQFDATA();
+	MessageREQFDATA(const char* sender_ipv4);
 	virtual ~MessageREQFDATA();
 
 	// generates json format of message
@@ -87,7 +91,7 @@ public:
 class MessageADDFILE: public Message {
 public:
 
-	MessageADDFILE();
+	MessageADDFILE(const char* sender_ipv4);
 	virtual ~MessageADDFILE();
 
 	// generates json format of message
@@ -97,7 +101,7 @@ public:
 class MessageDELFILE: public Message {
 public:
 
-	MessageDELFILE();
+	MessageDELFILE(const char* sender_ipv4);
 	virtual ~MessageDELFILE();
 
 	// generates json format of message
@@ -107,7 +111,7 @@ public:
 class MessageREVFILE: public Message {
 public:
 
-	MessageREVFILE();
+	MessageREVFILE(const char* sender_ipv4);
 	virtual ~MessageREVFILE();
 
 	// generates json format of message
@@ -117,7 +121,7 @@ public:
 class MessageLOCFILE: public Message {
 public:
 
-	MessageLOCFILE();
+	MessageLOCFILE(const char* sender_ipv4);
 	virtual ~MessageLOCFILE();
 
 	// generates json format of message
@@ -127,7 +131,7 @@ public:
 class MessageUNLOCFILE: public Message {
 public:
 
-	MessageUNLOCFILE();
+	MessageUNLOCFILE(const char* sender_ipv4);
 	virtual ~MessageUNLOCFILE();
 
 	// generates json format of message
@@ -135,6 +139,6 @@ public:
 };
 
 // function creates message object from
-Message* parseJSONtoMessage(string json);
+Message parseJSONtoMessage( const Datagram& dgram );
 
 #endif /* NETWORK_MESSAGE_H_ */
