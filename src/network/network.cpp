@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
 #include <common.h>
+#include "datagram.h"
 #include <utilFunctions.h>
 #include <errno.h>
 #include <ifaddrs.h>
@@ -254,6 +255,8 @@ int UDPlistener::run(int nr_dgrams) {
 	listening = true;
 	while (listening && (nr_dgrams > 0)) {
 		char buf[MAX_DGRAM_LEN];
+		memset(buf, 0, sizeof buf);
+
 		if ( (numbytes = recvfrom(udpsock,
 								buf,
 								MAX_DGRAM_LEN - 1,
@@ -264,12 +267,11 @@ int UDPlistener::run(int nr_dgrams) {
 			//throw std::runtime_error("Failed to receive UDP datagram");
 		} else {
 			struct sockaddr_in* their_addr_in = (struct sockaddr_in *) &their_addr;
-			std::string their_str(inet_ntoa(their_addr_in->sin_addr));
-			std::string datagram(buf, numbytes);
+
+			Datagram dgram( inet_ntoa(their_addr_in->sin_addr), buf, numbytes);
 
 			// save received datagram
-			std::pair<std::string, std::string> datagram_pair(their_str, datagram);
-			receivedUDPs.insert( datagram_pair );
+			receivedUDPs.insert( dgram );
 			nr_dgrams--;
 		}
 	}

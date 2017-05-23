@@ -16,6 +16,7 @@
 #include <netdb.h>
 #include <thread>
 #include <blockingQueue.h>
+#include "datagram.h"
 
 // listener of tcp datagrams
 class TCPlistener {
@@ -38,7 +39,7 @@ public:
 class UDPlistener {
 private:
 	// pair: key = sender address, value = received bytes
-	BlockingQueue< std::pair<std::string, std::string> > receivedUDPs;
+	BlockingQueue< Datagram > receivedUDPs;
 	bool listening = false;
 	// port of listener socket
 	int port;
@@ -58,7 +59,7 @@ public:
 		return port;
 	}
 
-	BlockingQueue< std::pair<std::string, std::string> >& getReceivedUdPs() {
+	BlockingQueue< Datagram >& getReceivedUdPs() {
 		return receivedUDPs;
 	}
 };
