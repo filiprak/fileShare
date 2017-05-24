@@ -26,6 +26,14 @@ public:
 
 	Message(MSG_TYPE type, const char* sender_ipv4);
 	virtual ~Message();
+
+	const string& getSenderIpv4() const {
+		return sender_ipv4;
+	}
+
+	MSG_TYPE getType() const {
+		return type;
+	}
 };
 
 class MessageGREETING: public Message {

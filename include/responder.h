@@ -1,6 +1,10 @@
 /*
  * responder.h
  *
+ *	Responder performs incoming messages handling,
+ *	runs in his own, separate thread, takes messages from
+ *	parsed received messages from message queue
+ *
  *  Created on: 24.05.2017
  *      Author: raqu
  */
@@ -25,6 +29,15 @@ public:
 
 	void run();
 	void stop();
+
+	vector<std::thread>& getThreads() {
+		return threads;
+	}
+
+	void joinThreads() {
+		for (unsigned i = 0; i < threads.size(); i++)
+			threads[i].join();
+	}
 };
 
 /* remote triggered operations (by remote peer, not local) handled by Responder*/
@@ -33,13 +46,16 @@ public:
 void responseGREETINGThread(MessageGREETING& mess);
 
 // response on file request
-void responseREQUFILEThread(MessageREQFILE &mess);
+void responseREQFILEThread(MessageREQFILE &mess);
 
 // response on file data request
 void responseREQFDATAThread(MessageREQFDATA &mess);
 
 // response on file list request
 void responseREQLISTThread(MessageREQLIST &mess);
+
+// response on file list received
+void responseRESPLISTThread(MessageRESPLIST &mess);
 
 // response on file added
 void responseADDFILEThread(MessageADDFILE &mess);

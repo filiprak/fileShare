@@ -20,7 +20,7 @@ Listener::~Listener(){
 
 int Listener::run() {
 	std::cout << "running listener" << std::endl;
-	network.listenUDP(3, 5, BROADCAST_PORT);
+	network.listenUDP(3, 5, LISTENER_PORT);
 	std::cout << "exiting listener" << std::endl;
 }
 
@@ -30,7 +30,7 @@ void Listener::parse() {
 	parsing = true;
 	while( parsing ) {
 		Datagram dgram = qdgrams.take();
-		if ( !network.getUdplisten().isListening() ) return;
+		if ( !network.getUdplisten().isListening() ) break;
 		Message parsed = parseJSONtoMessage( dgram );
 		messq.insert(parsed);
 	}

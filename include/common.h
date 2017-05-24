@@ -13,11 +13,12 @@
 #define NET_IFACE 				"enp0s3"
 //#define NET_IFACE 				"enp8s0"
 
-#define BROADCAST_PORT			4950
+#define LISTENER_PORT			4950
 
 #define MAX_DGRAM_LEN			4096
 #define UDP_QUEUE_SIZE			2048
 
+#define MAX_RESPONER_THREADS	32
 
 // protocol message types
 typedef enum {
