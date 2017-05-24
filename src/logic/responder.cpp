@@ -7,6 +7,7 @@
 
 #include "responder.h"
 #include "utilFunctions.h"
+#include "network.h"
 #include <iostream>
 #include <unistd.h>
 
