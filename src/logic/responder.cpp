@@ -11,7 +11,7 @@
 #include <iostream>
 #include <unistd.h>
 
-Responder::Responder(BlockingQueue<Message>& q) : messq(q) {
+Responder::Responder(BlockingQueue< Message* >& q) : messq(q) {
 }
 
 Responder::~Responder() {
@@ -21,49 +21,52 @@ Responder::~Responder() {
 void Responder::run() {
 	running = true;
 	while(running) {
-		Message m = messq.take();
-		if(!running) break;
+		Message* m = messq.take();
+		if(!running) {
+			delete m;
+			break;
+		}
 		// strategy
-		switch ( m.getType() ) {
+		switch ( m->getType() ) {
 			case GREETING:
 				threads.push_back( std::thread(responseGREETINGThread,
-								   std::ref( (MessageGREETING&) m) ) );
+								   (MessageGREETING*) m) );
 				break;
 			case REQLIST:
 				threads.push_back( std::thread(responseREQLISTThread,
-								   std::ref( (MessageREQLIST&) m) ) );
+								   (MessageREQLIST*) m) );
 				break;
 			case RESPLIST:
 				threads.push_back( std::thread(responseRESPLISTThread,
-								   std::ref( (MessageRESPLIST&) m) ) );
+								   (MessageRESPLIST*) m) );
 				break;
 			case REQFILE:
 				threads.push_back( std::thread(responseREQFILEThread,
-								   std::ref( (MessageREQFILE&) m) ) );
+								   (MessageREQFILE*) m) );
 				break;
 			case REQFDATA:
 				threads.push_back( std::thread(responseREQFDATAThread,
-								   std::ref( (MessageREQFDATA&) m) ) );
+								   (MessageREQFDATA*) m) );
 				break;
 			case ADDFILE:
 				threads.push_back( std::thread(responseADDFILEThread,
-								   std::ref( (MessageADDFILE&) m) ) );
+								   (MessageADDFILE*) m) );
 				break;
 			case DELFILE:
 				threads.push_back( std::thread(responseDELFILEThread,
-								   std::ref( (MessageDELFILE&) m) ) );
+								   (MessageDELFILE*) m) );
 				break;
 			case REVFILE:
 				threads.push_back( std::thread(responseREVFILEThread,
-								   std::ref( (MessageREVFILE&) m) ) );
+								   (MessageREVFILE*) m) );
 				break;
 			case LOCFILE:
 				threads.push_back( std::thread(responseLOCFILEThread,
-								   std::ref( (MessageLOCFILE&) m) ) );
+								   (MessageLOCFILE*) m) );
 				break;
 			case UNLOCFILE:
 				threads.push_back( std::thread(responseUNLOCFILEThread,
-								   std::ref( (MessageUNLOCFILE&) m) ) );
+								   (MessageUNLOCFILE*) m) );
 				break;
 			default:
 				//ignore other message types
@@ -83,59 +86,65 @@ void Responder::run() {
 
 void Responder::stop() {
 	running = false;
-	Message poison_pill(GREETING, "pill");
+	Message* poison_pill = new Message(GREETING, "pill");
 	messq.insert(poison_pill);
 }
 
-void responseGREETINGThread(MessageGREETING& mess) {
+void responseGREETINGThread(MessageGREETING* mess) {
 	std::cout << __FUNCTION__ << std::endl;
 
 	Network network;
-
+	std::cout << mess->jsonify() << __FUNCTION__ << std::endl;
 
 	std::cout << "exit" << __FUNCTION__ << std::endl;
+	delete mess;
 }
 
-void responseREQFILEThread(MessageREQFILE& mess) {
+void responseREQFILEThread(MessageREQFILE* mess) {
 	std::cout << __FUNCTION__ << std::endl;
-	sleep(10);
+	sleep(1);
 	std::cout << "exit" << __FUNCTION__ << std::endl;
+	delete mess;
 }
 
-void responseREQFDATAThread(MessageREQFDATA& mess) {
+void responseREQFDATAThread(MessageREQFDATA* mess) {
 	std::cout << __FUNCTION__ << std::endl;
-	sleep(20);
+	sleep(2);
 	std::cout << "exit" << __FUNCTION__ << std::endl;
+	delete mess;
 }
 
-void responseREQLISTThread(MessageREQLIST& mess) {
+void responseREQLISTThread(MessageREQLIST* mess) {
 	std::cout << __FUNCTION__ << std::endl;
 	sleep(5);
 	std::cout << "exit" << __FUNCTION__ << std::endl;
+	delete mess;
 }
 
-void responseRESPLISTThread(MessageRESPLIST& mess) {
+void responseRESPLISTThread(MessageRESPLIST* mess) {
 	std::cout << __FUNCTION__ << std::endl;
 	sleep(6);
 	std::cout << "exit" << __FUNCTION__ << std::endl;
+	delete mess;
 }
 
-void responseADDFILEThread(MessageADDFILE& mess) {
+void responseADDFILEThread(MessageADDFILE* mess) {
 	std::cout << __FUNCTION__ << std::endl;
 	sleep(3);
 	std::cout << "exit" << __FUNCTION__ << std::endl;
+	delete mess;
 }
 
-void responseDELFILEThread(MessageDELFILE& mess) {
+void responseDELFILEThread(MessageDELFILE* mess) {
 }
 
-void responseREVFILEThread(MessageREVFILE& mess) {
+void responseREVFILEThread(MessageREVFILE* mess) {
 }
 
-void responseLOCFILEThread(MessageLOCFILE& mess) {
+void responseLOCFILEThread(MessageLOCFILE* mess) {
 }
 
-void responseUNLOCFILEThread(MessageUNLOCFILE& mess) {
+void responseUNLOCFILEThread(MessageUNLOCFILE* mess) {
 }
 
 void responderThread(Responder& resp) {

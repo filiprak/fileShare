@@ -270,7 +270,7 @@ int UDPlistener::run(int nr_dgrams) {
 		} else {
 			struct sockaddr_in* their_addr_in = (struct sockaddr_in *) &their_addr;
 
-			Datagram dgram( inet_ntoa(their_addr_in->sin_addr), buf, numbytes);
+			Datagram* dgram = new Datagram( inet_ntoa(their_addr_in->sin_addr), buf, numbytes);
 
 			// save received datagram
 			receivedUDPs.insert( dgram );

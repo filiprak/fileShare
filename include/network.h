@@ -39,7 +39,7 @@ public:
 class UDPlistener {
 private:
 	// pair: key = sender address, value = received bytes
-	BlockingQueue< Datagram > receivedUDPs;
+	BlockingQueue< Datagram* > receivedUDPs;
 	bool listening = false;
 	// port of listener socket
 	int port;
@@ -60,8 +60,14 @@ public:
 		return port;
 	}
 
-	BlockingQueue< Datagram >& getReceivedUdPs() {
+	BlockingQueue< Datagram* >& getReceivedUdPs() {
 		return receivedUDPs;
+	}
+
+	void clearReceivedUDPs() {
+		while( receivedUDPs.notEmpty() ) {
+			delete receivedUDPs.take();
+		}
 	}
 };
 

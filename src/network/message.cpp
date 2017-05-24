@@ -7,6 +7,15 @@
 
 #include "message.h"
 #include <string>
+#include <json/json.h>
+#include <iostream>
+
+// json property names
+#define TAG_TYPE			"type"
+#define TAG_SENDER			"sender"
+#define TAG_FILENAME		"file"
+#define TAG_FILELIST		"flist"
+
 
 Message::Message(MSG_TYPE type, const char* sender_ipv4) {
 	this->type = type;
@@ -17,14 +26,19 @@ Message::~Message() {
 	// TODO Auto-generated destructor stub
 }
 
-MessageGREETING::MessageGREETING(const char* sender_ipv4) : Message(GREETING, sender_ipv4){
-
+MessageGREETING::MessageGREETING(const char* sender_ipv4, std::string sender)
+	: Message(GREETING, sender_ipv4), sender(sender) {
 }
 
 MessageGREETING::~MessageGREETING() {
 }
 
-const char* MessageGREETING::jsonify() const {
+std::string MessageGREETING::jsonify() {
+	Json::Value root;
+	root[TAG_TYPE] = type;
+	root[TAG_SENDER] = sender.c_str();
+
+	return fast_writer.write(root);
 }
 
 MessageRESPLIST::MessageRESPLIST(const char* sender_ipv4) : Message(RESPLIST, sender_ipv4) {
@@ -34,7 +48,7 @@ MessageRESPLIST::MessageRESPLIST(const char* sender_ipv4) : Message(RESPLIST, se
 MessageRESPLIST::~MessageRESPLIST() {
 }
 
-const char* MessageRESPLIST::jsonify() const {
+std::string MessageRESPLIST::jsonify() {
 }
 
 MessageREQLIST::MessageREQLIST(const char* sender_ipv4) : Message(REQLIST, sender_ipv4) {
@@ -44,7 +58,7 @@ MessageREQLIST::MessageREQLIST(const char* sender_ipv4) : Message(REQLIST, sende
 MessageREQLIST::~MessageREQLIST() {
 }
 
-const char* MessageREQLIST::jsonify() const {
+std::string MessageREQLIST::jsonify() {
 }
 
 MessageREQFILE::MessageREQFILE(const char* sender_ipv4) : Message(REQFILE, sender_ipv4) {
@@ -54,7 +68,7 @@ MessageREQFILE::MessageREQFILE(const char* sender_ipv4) : Message(REQFILE, sende
 MessageREQFILE::~MessageREQFILE() {
 }
 
-const char* MessageREQFILE::jsonify() const {
+std::string MessageREQFILE::jsonify() {
 }
 
 MessageRESPFILE::MessageRESPFILE(const char* sender_ipv4) : Message(RESPFILE, sender_ipv4) {
@@ -64,7 +78,7 @@ MessageRESPFILE::MessageRESPFILE(const char* sender_ipv4) : Message(RESPFILE, se
 MessageRESPFILE::~MessageRESPFILE() {
 }
 
-const char* MessageRESPFILE::jsonify() const {
+std::string MessageRESPFILE::jsonify() {
 }
 
 MessageREQFDATA::MessageREQFDATA(const char* sender_ipv4) : Message(REQFDATA, sender_ipv4) {
@@ -74,7 +88,7 @@ MessageREQFDATA::MessageREQFDATA(const char* sender_ipv4) : Message(REQFDATA, se
 MessageREQFDATA::~MessageREQFDATA() {
 }
 
-const char* MessageREQFDATA::jsonify() const {
+std::string MessageREQFDATA::jsonify() {
 }
 
 MessageADDFILE::MessageADDFILE(const char* sender_ipv4) : Message(ADDFILE, sender_ipv4) {
@@ -84,7 +98,7 @@ MessageADDFILE::MessageADDFILE(const char* sender_ipv4) : Message(ADDFILE, sende
 MessageADDFILE::~MessageADDFILE() {
 }
 
-const char* MessageADDFILE::jsonify() const {
+std::string MessageADDFILE::jsonify() {
 }
 
 MessageDELFILE::MessageDELFILE(const char* sender_ipv4) : Message(DELFILE, sender_ipv4) {
@@ -94,7 +108,7 @@ MessageDELFILE::MessageDELFILE(const char* sender_ipv4) : Message(DELFILE, sende
 MessageDELFILE::~MessageDELFILE() {
 }
 
-const char* MessageDELFILE::jsonify() const {
+std::string MessageDELFILE::jsonify() {
 }
 
 MessageREVFILE::MessageREVFILE(const char* sender_ipv4) : Message(REVFILE, sender_ipv4) {
@@ -104,7 +118,7 @@ MessageREVFILE::MessageREVFILE(const char* sender_ipv4) : Message(REVFILE, sende
 MessageREVFILE::~MessageREVFILE() {
 }
 
-const char* MessageREVFILE::jsonify() const {
+std::string MessageREVFILE::jsonify() {
 }
 
 MessageLOCFILE::MessageLOCFILE(const char* sender_ipv4) : Message(LOCFILE, sender_ipv4) {
@@ -114,7 +128,7 @@ MessageLOCFILE::MessageLOCFILE(const char* sender_ipv4) : Message(LOCFILE, sende
 MessageLOCFILE::~MessageLOCFILE() {
 }
 
-const char* MessageLOCFILE::jsonify() const {
+std::string MessageLOCFILE::jsonify() {
 }
 
 MessageUNLOCFILE::MessageUNLOCFILE(const char* sender_ipv4) : Message(UNLOCFILE, sender_ipv4) {
@@ -124,10 +138,10 @@ MessageUNLOCFILE::MessageUNLOCFILE(const char* sender_ipv4) : Message(UNLOCFILE,
 MessageUNLOCFILE::~MessageUNLOCFILE() {
 }
 
-const char* MessageUNLOCFILE::jsonify() const {
+std::string MessageUNLOCFILE::jsonify() {
 }
 
 
-Message parseJSONtoMessage( const Datagram& dgram ) {
-	return MessageGREETING( dgram.getSender() );
+Message* parseJSONtoMessage( const Datagram* dgram ) {
+	return new MessageGREETING("12312", "hostname");
 }

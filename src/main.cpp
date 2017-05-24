@@ -20,9 +20,10 @@
 #include "controller.h"
 #include "message.h"
 #include "responder.h"
+#include <json/json.h>
 
 int main() {
-	BlockingQueue<Message> messageQueue(MESS_QUEUE_SIZE, false);
+	BlockingQueue< Message* > messageQueue(MESS_QUEUE_SIZE, false);
 	Controller controller;
 	Listener listener(messageQueue);
 	Responder responder(messageQueue);
@@ -39,23 +40,32 @@ int main() {
 		// run listener parser thread
 		std::thread br_parserT(parserThread, std::ref(listener) );
 
-		/* test responder */
-		MessageREQFILE m("123");
-		messageQueue.insert(m);
 
-		MessageREQFDATA m1("123");
-		messageQueue.insert(m1);
+		/* test responder*/
+		MessageREQFILE* m = new MessageREQFILE("123");
+		messageQueue.insert( (Message*) m );
 
-		MessageGREETING m2("123");
-		messageQueue.insert(m2);
+		MessageREQFDATA* m1 = new MessageREQFDATA("123");
+		messageQueue.insert( (Message*) m1 );
 
-		sleep(5);
+		MessageGREETING* m3 = new MessageGREETING("123", "host03");
+		messageQueue.insert( (Message*) m3 );
+
+		// ensure that listener started
+		while ( !listener.isListening() )
+			usleep(100);
+
+		//run controller
 
 		listener.stop();
 		br_listenerT.join();
 		br_parserT.join();
+
 		responder.stop();
 		responderT.join();
+
+		// clear left messages
+		listener.clearQueues();
 
 	} catch (const std::exception &e) {
 		std::cout << std::string("Exception occured: ") + std::string(e.what()) << std::endl;

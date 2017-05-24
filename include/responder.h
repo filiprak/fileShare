@@ -19,12 +19,12 @@
 
 class Responder {
 private:
-	BlockingQueue< Message >& messq;
+	BlockingQueue< Message* >& messq;
 	vector<std::thread> threads;
 	bool running = false;
 
 public:
-	Responder(BlockingQueue< Message >& q);
+	Responder(BlockingQueue< Message* >& q);
 	virtual ~Responder();
 
 	void run();
@@ -43,34 +43,34 @@ public:
 /* remote triggered operations (by remote peer, not local) handled by Responder*/
 
 // response on greeting
-void responseGREETINGThread(MessageGREETING& mess);
+void responseGREETINGThread(MessageGREETING* mess);
 
 // response on file request
-void responseREQFILEThread(MessageREQFILE &mess);
+void responseREQFILEThread(MessageREQFILE* mess);
 
 // response on file data request
-void responseREQFDATAThread(MessageREQFDATA &mess);
+void responseREQFDATAThread(MessageREQFDATA* mess);
 
 // response on file list request
-void responseREQLISTThread(MessageREQLIST &mess);
+void responseREQLISTThread(MessageREQLIST* mess);
 
 // response on file list received
-void responseRESPLISTThread(MessageRESPLIST &mess);
+void responseRESPLISTThread(MessageRESPLIST* mess);
 
 // response on file added
-void responseADDFILEThread(MessageADDFILE &mess);
+void responseADDFILEThread(MessageADDFILE* mess);
 
 // response on file deleted
-void responseDELFILEThread(MessageDELFILE &mess);
+void responseDELFILEThread(MessageDELFILE* mess);
 
 // response on file revoked
-void responseREVFILEThread(MessageREVFILE &mess);
+void responseREVFILEThread(MessageREVFILE* mess);
 
 // response on file locked
-void responseLOCFILEThread(MessageLOCFILE &mess);
+void responseLOCFILEThread(MessageLOCFILE* mess);
 
 // response on file unlocked
-void responseUNLOCFILEThread(MessageUNLOCFILE &mess);
+void responseUNLOCFILEThread(MessageUNLOCFILE* mess);
 // responder thread---------------------------
 void responderThread(Responder& resp);
 

@@ -14,6 +14,7 @@
 #include <string>
 #include "common.h"
 #include "datagram.h"
+#include <json/json.h>
 
 using namespace std;
 
@@ -23,6 +24,9 @@ public:
 	string sender_ipv4;
 	// message type: GREETING, RESPFILE, ...
 	MSG_TYPE type;
+	// json fast writer
+	Json::FastWriter fast_writer;
+
 
 	Message(MSG_TYPE type, const char* sender_ipv4);
 	virtual ~Message();
@@ -37,13 +41,20 @@ public:
 };
 
 class MessageGREETING: public Message {
+private:
+	std::string sender;
+
 public:
 
-	MessageGREETING(const char* sender_ipv4);
+	MessageGREETING(const char* sender_ipv4, std::string sender);
 	virtual ~MessageGREETING();
 
 	// generates json format of message
-	virtual const char* jsonify() const;
+	std::string jsonify();
+
+	std::string& getSender() {
+		return sender;
+	}
 };
 
 class MessageRESPLIST: public Message {
@@ -53,7 +64,7 @@ public:
 	virtual ~MessageRESPLIST();
 
 	// generates json format of message
-	virtual const char* jsonify() const;
+	std::string jsonify();
 };
 
 class MessageREQLIST: public Message {
@@ -63,7 +74,7 @@ public:
 	virtual ~MessageREQLIST();
 
 	// generates json format of message
-	virtual const char* jsonify() const;
+	std::string jsonify();
 };
 
 class MessageREQFILE: public Message {
@@ -73,7 +84,7 @@ public:
 	virtual ~MessageREQFILE();
 
 	// generates json format of message
-	virtual const char* jsonify() const;
+	std::string jsonify();
 };
 
 class MessageRESPFILE: public Message {
@@ -83,7 +94,7 @@ public:
 	virtual ~MessageRESPFILE();
 
 	// generates json format of message
-	virtual const char* jsonify() const;
+	std::string jsonify();
 };
 
 class MessageREQFDATA: public Message {
@@ -93,7 +104,7 @@ public:
 	virtual ~MessageREQFDATA();
 
 	// generates json format of message
-	virtual const char* jsonify() const;
+	std::string jsonify();
 };
 
 class MessageADDFILE: public Message {
@@ -103,7 +114,7 @@ public:
 	virtual ~MessageADDFILE();
 
 	// generates json format of message
-	virtual const char* jsonify() const;
+	std::string jsonify();
 };
 
 class MessageDELFILE: public Message {
@@ -113,7 +124,7 @@ public:
 	virtual ~MessageDELFILE();
 
 	// generates json format of message
-	virtual const char* jsonify() const;
+	std::string jsonify();
 };
 
 class MessageREVFILE: public Message {
@@ -123,7 +134,7 @@ public:
 	virtual ~MessageREVFILE();
 
 	// generates json format of message
-	virtual const char* jsonify() const;
+	std::string jsonify();
 };
 
 class MessageLOCFILE: public Message {
@@ -133,7 +144,7 @@ public:
 	virtual ~MessageLOCFILE();
 
 	// generates json format of message
-	virtual const char* jsonify() const;
+	std::string jsonify();
 };
 
 class MessageUNLOCFILE: public Message {
@@ -143,10 +154,10 @@ public:
 	virtual ~MessageUNLOCFILE();
 
 	// generates json format of message
-	virtual const char* jsonify() const;
+	std::string jsonify();
 };
 
 // function creates message object from
-Message parseJSONtoMessage( const Datagram& dgram );
+Message* parseJSONtoMessage( const Datagram* dgram );
 
 #endif /* NETWORK_MESSAGE_H_ */

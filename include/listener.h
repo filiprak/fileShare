@@ -18,17 +18,18 @@
 class Listener {
 private:
 	Network network;
-	BlockingQueue< Message >& messq;
+	BlockingQueue< Message* >& messq;
 	bool parsing = false;
 
 public:
-	Listener(BlockingQueue< Message >& q);
+	Listener(BlockingQueue< Message* >& q);
 	virtual ~Listener();
 
 	int run();
 	void parse();
 	bool isListening();
 	void stop();
+	void clearQueues();
 };
 
 void listenerThread(Listener& listener);

@@ -8,13 +8,11 @@
 #ifndef INCLUDE_COMMON_H_
 #define INCLUDE_COMMON_H_
 
-#define MESS_QUEUE_SIZE 		256
-
 #define NET_IFACE 				"enp0s3"
-//#define NET_IFACE 				"enp8s0"
+#define NET_IFACE 				"enp8s0"
 
 #define LISTENER_PORT			4950
-
+#define MESS_QUEUE_SIZE 		256
 #define MAX_DGRAM_LEN			4096
 #define UDP_QUEUE_SIZE			2048
 
