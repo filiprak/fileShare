@@ -163,7 +163,6 @@ Message* parseJSONtoMessage( Datagram* dgram ) {
 	}
 
 	Message* message = nullptr;
-	console->info("Parsing message results: success: {}, json: {}", res, parsed.toStyledString() );
 	if (res) {
 		// message parsed successfuly
 

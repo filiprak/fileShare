@@ -109,7 +109,6 @@ void responseGREETINGThread(MessageGREETING* mess) {
 	network.sendUDP(response.jsonify().c_str(),
 					mess->getSenderIpv4().c_str(),
 					mess->getRespPort() );
-
 	delete mess;
 }
 

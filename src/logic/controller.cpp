@@ -48,7 +48,7 @@ bool greetingThread(const char* nick) {
 		recvd.pop();
 		if ( m->getType() == GREETING) {
 			if ( ((MessageGREETING*) m)->getSender() == std::string(nick) ) {
-				console->error("Nick '{} is already used by host: {}", nick, m->getSenderIpv4() );
+				console->error("Nick '{}' is already used by host: {}", nick, m->getSenderIpv4() );
 				validNick = false;
 				delete m;
 				break;
