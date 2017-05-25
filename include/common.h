@@ -8,15 +8,21 @@
 #ifndef INCLUDE_COMMON_H_
 #define INCLUDE_COMMON_H_
 
-#define NET_IFACE 				"enp0s3"
-#define NET_IFACE 				"enp8s0"
-
+//listener
 #define LISTENER_PORT			4950
+#define LISTENER_TIMEOUT		60*60 //seconds
+#define GREETING_TIMEOUT		2 //seconds
+
+// main message queue
 #define MESS_QUEUE_SIZE 		256
-#define MAX_DGRAM_LEN			4096
+
+// UDP sizes
+#define MAX_DGRAM_LEN			4096 //bytes
 #define UDP_QUEUE_SIZE			2048
 
 #define MAX_RESPONER_THREADS	32
+
+#define MAX_NICK_LEN			32 //chars
 
 // protocol message types
 typedef enum {

@@ -7,31 +7,46 @@
  *      Author: raqu
  */
 
-#include <iostream>
+#include <blockingQueue.h>
+#include <common.h>
 #include <thread>
+#include <controller.h>
+#include <listener.h>
+#include <logger.h>
+#include <message.h>
+#include <network.h>
+#include <responder.h>
+#include <spdlog/details/spdlog_impl.h>
 #include <unistd.h>
-#include <string.h>
+#include <cstdlib>
+#include <exception>
+#include <string>
 
-#include <stdio.h>
 
-#include "blockingQueue.h"
-#include "listener.h"
-#include "common.h"
-#include "controller.h"
-#include "message.h"
-#include "responder.h"
-#include <json/json.h>
+std::string usage = "Program usage: command <iface> <nick>";
 
-int main() {
+
+int main( int argc, char* argv[] ) {
+	spdlog::set_pattern("[%H:%M:%S][thread %t]: %v");
+	if (argc < 3) {
+		console->error(usage);
+		exit(0);
+	}
+
+	console->warn("Starting fileShare program..." );
+
 	BlockingQueue< Message* > messageQueue(MESS_QUEUE_SIZE, false);
 	Controller controller;
 	Listener listener(messageQueue);
 	Responder responder(messageQueue);
+	responder.setRespondOnlyGreetings(true);
 
 	try {
-		std::cout << "Invocating fileShare..." << std::endl;
 		// get local ipv4 and broadcast address and save it to Network module
-		Network::initMyAddress();
+		Network::initMyAddress( argv[1] );
+		// save my nick to network module
+		Network::setMyNick( argv[2] );
+		console->info("Your host IPv4: {} ({})", Network::getMyIpv4Addr(), argv[2] );
 
 		// run responder thread
 		std::thread responderT(responderThread, std::ref(responder) );
@@ -40,23 +55,20 @@ int main() {
 		// run listener parser thread
 		std::thread br_parserT(parserThread, std::ref(listener) );
 
-
-		/* test responder*/
-		MessageREQFILE* m = new MessageREQFILE("123");
-		messageQueue.insert( (Message*) m );
-
-		MessageREQFDATA* m1 = new MessageREQFDATA("123");
-		messageQueue.insert( (Message*) m1 );
-
-		MessageGREETING* m3 = new MessageGREETING("123", "host03");
-		messageQueue.insert( (Message*) m3 );
+		// check for nick duplication
+		bool validNick = greetingThread(argv[2]);
 
 		// ensure that listener started
 		while ( !listener.isListening() )
 			usleep(100);
 
 		//run controller
+		if (validNick) {
+			responder.setRespondOnlyGreetings(false);
+			while(true);
+		}
 
+		// stop threads
 		listener.stop();
 		br_listenerT.join();
 		br_parserT.join();
@@ -67,10 +79,12 @@ int main() {
 		// clear left messages
 		listener.clearQueues();
 
+
 	} catch (const std::exception &e) {
-		std::cout << std::string("Exception occured: ") + std::string(e.what()) << std::endl;
+		console->error(  std::string("Exception occured: ") + std::string(e.what())  );
 	}
 
+	console->warn("Exciting fileShare program...");
 	return 0;
 }
 

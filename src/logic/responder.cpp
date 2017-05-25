@@ -5,11 +5,12 @@
  *      Author: raqu
  */
 
-#include "responder.h"
-#include "utilFunctions.h"
-#include "network.h"
-#include <iostream>
+#include <common.h>
+#include <logger.h>
+#include <network.h>
+#include <responder.h>
 #include <unistd.h>
+#include <string>
 
 Responder::Responder(BlockingQueue< Message* >& q) : messq(q) {
 }
@@ -19,6 +20,7 @@ Responder::~Responder() {
 }
 
 void Responder::run() {
+	console->info("Starting responder...");
 	running = true;
 	while(running) {
 		Message* m = messq.take();
@@ -27,111 +29,112 @@ void Responder::run() {
 			break;
 		}
 		// strategy
-		switch ( m->getType() ) {
-			case GREETING:
-				threads.push_back( std::thread(responseGREETINGThread,
-								   (MessageGREETING*) m) );
-				break;
-			case REQLIST:
-				threads.push_back( std::thread(responseREQLISTThread,
-								   (MessageREQLIST*) m) );
-				break;
-			case RESPLIST:
-				threads.push_back( std::thread(responseRESPLISTThread,
-								   (MessageRESPLIST*) m) );
-				break;
-			case REQFILE:
-				threads.push_back( std::thread(responseREQFILEThread,
-								   (MessageREQFILE*) m) );
-				break;
-			case REQFDATA:
-				threads.push_back( std::thread(responseREQFDATAThread,
-								   (MessageREQFDATA*) m) );
-				break;
-			case ADDFILE:
-				threads.push_back( std::thread(responseADDFILEThread,
-								   (MessageADDFILE*) m) );
-				break;
-			case DELFILE:
-				threads.push_back( std::thread(responseDELFILEThread,
-								   (MessageDELFILE*) m) );
-				break;
-			case REVFILE:
-				threads.push_back( std::thread(responseREVFILEThread,
-								   (MessageREVFILE*) m) );
-				break;
-			case LOCFILE:
-				threads.push_back( std::thread(responseLOCFILEThread,
-								   (MessageLOCFILE*) m) );
-				break;
-			case UNLOCFILE:
-				threads.push_back( std::thread(responseUNLOCFILEThread,
-								   (MessageUNLOCFILE*) m) );
-				break;
-			default:
-				//ignore other message types
-				break;
+		if (m->getType() == GREETING) {
+			threads.push_back( std::thread(responseGREETINGThread,
+									(MessageGREETING*) m) );
+		} else if (!respondOnlyGreetings) {
+			switch ( m->getType() ) {
+				case REQLIST:
+					threads.push_back( std::thread(responseREQLISTThread,
+									   (MessageREQLIST*) m) );
+					break;
+				case RESPLIST:
+					threads.push_back( std::thread(responseRESPLISTThread,
+									   (MessageRESPLIST*) m) );
+					break;
+				case REQFILE:
+					threads.push_back( std::thread(responseREQFILEThread,
+									   (MessageREQFILE*) m) );
+					break;
+				case REQFDATA:
+					threads.push_back( std::thread(responseREQFDATAThread,
+									   (MessageREQFDATA*) m) );
+					break;
+				case ADDFILE:
+					threads.push_back( std::thread(responseADDFILEThread,
+									   (MessageADDFILE*) m) );
+					break;
+				case DELFILE:
+					threads.push_back( std::thread(responseDELFILEThread,
+									   (MessageDELFILE*) m) );
+					break;
+				case REVFILE:
+					threads.push_back( std::thread(responseREVFILEThread,
+									   (MessageREVFILE*) m) );
+					break;
+				case LOCFILE:
+					threads.push_back( std::thread(responseLOCFILEThread,
+									   (MessageLOCFILE*) m) );
+					break;
+				case UNLOCFILE:
+					threads.push_back( std::thread(responseUNLOCFILEThread,
+									   (MessageUNLOCFILE*) m) );
+					break;
+				default:
+					//ignore other message types
+					console->warn("Message {} not responded", m->jsonify() );
+					break;
+			}
+		} else {
+			// unknown type of message
+			console->warn("Message {} not responded", m->jsonify() );
 		}
+
 		// if reaches maximum number of allowed running threads
 		if (threads.size() >= MAX_RESPONER_THREADS) {
-			std::cout << "threads: " << threads.size() << std::endl;
 			joinThreads();
 			threads.clear();
 		}
 	}
 	running = false;
+	console->info("Stopped responder...");
 	joinThreads();
 	threads.clear();
 }
 
 void Responder::stop() {
 	running = false;
-	Message* poison_pill = new Message(GREETING, "pill");
+	MessageGREETING* poison_pill = new MessageGREETING("0", "0", 0);
 	messq.insert(poison_pill);
 }
 
 void responseGREETINGThread(MessageGREETING* mess) {
-	std::cout << __FUNCTION__ << std::endl;
-
+	console->info("Responding on message from {}({})", mess->getSenderIpv4(),
+			mess->getSender() );
 	Network network;
-	std::cout << mess->jsonify() << __FUNCTION__ << std::endl;
+	// response on greeting
+	MessageGREETING response(mess->getSenderIpv4().c_str(),
+			Network::getMyNick(),
+			mess->getRespPort());
+	network.sendUDP(response.jsonify().c_str(),
+					mess->getSenderIpv4().c_str(),
+					mess->getRespPort() );
 
-	std::cout << "exit" << __FUNCTION__ << std::endl;
 	delete mess;
 }
 
 void responseREQFILEThread(MessageREQFILE* mess) {
-	std::cout << __FUNCTION__ << std::endl;
 	sleep(1);
-	std::cout << "exit" << __FUNCTION__ << std::endl;
 	delete mess;
 }
 
 void responseREQFDATAThread(MessageREQFDATA* mess) {
-	std::cout << __FUNCTION__ << std::endl;
 	sleep(2);
-	std::cout << "exit" << __FUNCTION__ << std::endl;
 	delete mess;
 }
 
 void responseREQLISTThread(MessageREQLIST* mess) {
-	std::cout << __FUNCTION__ << std::endl;
 	sleep(5);
-	std::cout << "exit" << __FUNCTION__ << std::endl;
 	delete mess;
 }
 
 void responseRESPLISTThread(MessageRESPLIST* mess) {
-	std::cout << __FUNCTION__ << std::endl;
 	sleep(6);
-	std::cout << "exit" << __FUNCTION__ << std::endl;
 	delete mess;
 }
 
 void responseADDFILEThread(MessageADDFILE* mess) {
-	std::cout << __FUNCTION__ << std::endl;
 	sleep(3);
-	std::cout << "exit" << __FUNCTION__ << std::endl;
 	delete mess;
 }
 

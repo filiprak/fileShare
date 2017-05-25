@@ -10,10 +10,9 @@
 #ifndef NETWORK_DATAGRAM_H_
 #define NETWORK_DATAGRAM_H_
 
-#include "common.h"
+#include <common.h>
 #include <netdb.h>
-#include <string.h>
-#include <stdio.h>
+#include <cstring>
 
 
 class Datagram {

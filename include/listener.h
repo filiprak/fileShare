@@ -11,9 +11,9 @@
 #ifndef LOGIC_LISTENER_H_
 #define LOGIC_LISTENER_H_
 
-#include "message.h"
-#include "blockingQueue.h"
-#include "network.h"
+#include <blockingQueue.h>
+#include <message.h>
+#include <network.h>
 
 class Listener {
 private:

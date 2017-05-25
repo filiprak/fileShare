@@ -5,12 +5,10 @@
  *      Author: raqu
  */
 
-#include "listener.h"
-#include "blockingQueue.h"
-#include "datagram.h"
-#include "message.h"
-#include <unistd.h>
-#include <iostream>
+#include <common.h>
+#include <datagram.h>
+#include <listener.h>
+#include <logger.h>
 
 Listener::Listener(BlockingQueue< Message* >& q) : messq(q)  {
 }
@@ -19,14 +17,15 @@ Listener::~Listener(){
 }
 
 int Listener::run() {
-	std::cout << "running listener" << std::endl;
-	network.listenUDP(3, 5, LISTENER_PORT);
-	std::cout << "exiting listener" << std::endl;
+	console->info("Starting listener...");
+	network.listenUDP(LISTENER_TIMEOUT, 0, LISTENER_PORT);
+	console->info("Stopped listener...");
+	return 0;
 }
 
 void Listener::parse() {
-	std::cout << "running parser" << std::endl;
 	BlockingQueue< Datagram* >& qdgrams = network.getUdplisten().getReceivedUdPs();
+	console->info("Starting message parser...");
 	parsing = true;
 	while( parsing ) {
 		Datagram* dgram = qdgrams.take();
@@ -35,18 +34,24 @@ void Listener::parse() {
 			break;
 		}
 		Message* parsed = parseJSONtoMessage( dgram );
-		messq.insert(parsed);
+		// if parsing succeded
+		if (parsed != nullptr)
+			messq.insert(parsed);
 	}
 	parsing = false;
-	std::cout << "exiting parser" << std::endl;
+	console->info("Stopped message parser...");
+
 }
 
 void Listener::stop() {
 	network.getUdplisten().stop();
 	parsing = false;
-	Datagram* poison_pill = new Datagram("pill", "{}", 2);
+
+	Datagram* poison_pill = new Datagram("pill", "pill", 2);
 	network.getUdplisten().getReceivedUdPs().insert(poison_pill);
 
+	MessageGREETING poison_pill2("pill", "pill");
+	network.sendUDP(&poison_pill2, Network::getMyIpv4Addr(), LISTENER_PORT);
 	//clear message queue
 	while( messq.notEmpty() ) {
 		delete messq.take();

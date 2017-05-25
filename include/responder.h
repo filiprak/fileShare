@@ -22,6 +22,7 @@ private:
 	BlockingQueue< Message* >& messq;
 	vector<std::thread> threads;
 	bool running = false;
+	bool respondOnlyGreetings = false;
 
 public:
 	Responder(BlockingQueue< Message* >& q);
@@ -37,6 +38,10 @@ public:
 	void joinThreads() {
 		for (unsigned i = 0; i < threads.size(); i++)
 			threads[i].join();
+	}
+
+	void setRespondOnlyGreetings(bool respondOnlyGreetings) {
+		this->respondOnlyGreetings = respondOnlyGreetings;
 	}
 };
 

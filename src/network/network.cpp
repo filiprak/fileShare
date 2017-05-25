@@ -8,22 +8,22 @@
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
 #include <common.h>
-#include "datagram.h"
-#include <utilFunctions.h>
 #include <errno.h>
 #include <ifaddrs.h>
+#include <logger.h>
 #include <netinet/in.h>
 #include <network.h>
-#include <string.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-#include <thread>
 #include <unistd.h>
-#include <cstdio>
+#include <utilFunctions.h>
+#include <cstring>
 #include <stdexcept>
+
 
 char Network::broadcast_addr[];
 char Network::my_ipv4_addr[];
+std::string Network::my_nick;
 
 // helper function to determine local ipv4 address
 int getIfaceInfo(const char* iface, char* addr, bool braddr) {
@@ -76,10 +76,10 @@ int getIfaceInfo(const char* iface, char* addr, bool braddr) {
 	return -1;
 }
 
-void Network::initMyAddress() {
-	if( getIfaceInfo(NET_IFACE, my_ipv4_addr) != 0)
+void Network::initMyAddress(const char* iface) {
+	if( getIfaceInfo(iface, my_ipv4_addr) != 0)
 		throw std::runtime_error(strError("Cannot find interface IPv4 address", __FUNCTION__));
-	if( getIfaceInfo(NET_IFACE, broadcast_addr, true) != 0)
+	if( getIfaceInfo(iface, broadcast_addr, true) != 0)
 		throw std::runtime_error(strError("Cannot determine broadcast address", __FUNCTION__));
 }
 
@@ -91,7 +91,11 @@ Network::~Network() {
 	// TODO Auto-generated destructor stub
 }
 
-void Network::sendUDP(const char* data, const char* ipv4, int port) {
+void Network::sendUDP(Message* mess, const char* ipv4, int dest_port) {
+	sendUDP(mess->jsonify().c_str(), ipv4, dest_port );
+}
+
+void Network::sendUDP(const char* data, const char* ipv4, int dest_port) {
 
 	int udpsock;
 
@@ -101,7 +105,7 @@ void Network::sendUDP(const char* data, const char* ipv4, int port) {
 	/* Specify the address family */
 	destAddr.sin_family = AF_INET;
 	/* Specify the destination port */
-	destAddr.sin_port = htons(port);
+	destAddr.sin_port = htons(dest_port);
 	/* Specify the destination IP address */
 	destAddr.sin_addr.s_addr = inet_addr(ipv4);
 
@@ -128,12 +132,15 @@ void Network::sendUDP(const char* data, const char* ipv4, int port) {
 		throw std::runtime_error( strError("Some data was lost while sending UDP datagram",
 				__FUNCTION__) );
 	}
-
-	printf("UDP datagram was sent, nr bytes: %d\n", numbytes);
+	console->info("Sent UDP datagram to {}:{}: {}", ipv4, dest_port, data);
 	close(udpsock);
 }
 
-void Network::broadcastUDP(const char* data, int port) {
+void Network::broadcastUDP(Message* mess, int dest_port) {
+	broadcastUDP( mess->jsonify().c_str(), dest_port );
+}
+
+void Network::broadcastUDP(const char* data, int dest_port) {
 
 	int udpsock;
 	int broadcast = 1;
@@ -143,13 +150,12 @@ void Network::broadcastUDP(const char* data, int port) {
 	/* Specify the address family */
 	destAddr.sin_family = AF_INET;
 	/* Specify the destination port */
-	destAddr.sin_port = htons(port);
+	destAddr.sin_port = htons(dest_port);
 	/* Specify the broadcast IP address */
 	destAddr.sin_addr.s_addr = inet_addr(broadcast_addr);
 
 	/* Create a socket */
 	udpsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
 	/*
 	 * Verify the socket was created correctly. If not, return
 	 * immediately
@@ -157,27 +163,24 @@ void Network::broadcastUDP(const char* data, int port) {
 	if (udpsock == -1) {
 		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
 	}
-
 	// this call is what allows broadcast packets to be sent:
 	if (setsockopt(udpsock, SOL_SOCKET, SO_BROADCAST, &broadcast,
 		sizeof broadcast) == -1) {
 		close(udpsock);
 		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
 	}
-
 	/* Send another packet to the destination specified above */
 	if ((numbytes=sendto(udpsock, data, strlen(data), 0,
 	    (struct sockaddr *) &destAddr, sizeof destAddr)) == -1) {
 		close(udpsock);
 		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
 	}
-
 	if (numbytes < strlen(data)) {
 		close(udpsock);
 		throw std::runtime_error("Some data was lost while broadcasting UDP datagram");
 	}
 
-	printf("UDP broadcast was sent, nr bytes: %d\n", numbytes);
+	console->info("Sent broadcast to ports {}: {}", dest_port, data);
 	close(udpsock);
 }
 
@@ -247,15 +250,41 @@ void UDPlistener::init(unsigned timeout, int forceport) {
 	port = ntohs(addr.sin_port);
 }
 
-int UDPlistener::run(int nr_dgrams) {
+Message* UDPlistener::receiveMessage() {
+	// init must be called before
+	run(1);
+	if ( receivedUDPs.notEmpty() ) {
+		Datagram* dgram = receivedUDPs.take();
+		Message* m = parseJSONtoMessage(dgram);
+		return m;
+	}
+	return nullptr;
+}
+
+std::queue<Message*> UDPlistener::receiveMessages() {
+	// init must be called before
+	run();
+	std::queue<Message*> recvd;
+	while ( receivedUDPs.notEmpty() ) {
+		Datagram* dgram = receivedUDPs.take();
+		Message* m = parseJSONtoMessage(dgram);
+		if (m != nullptr)
+			recvd.push(m);
+	}
+	return recvd;
+}
+
+int UDPlistener::run(int exp_dgrams) {
+
 	struct sockaddr_storage their_addr;
 	socklen_t addr_len = sizeof their_addr;
 	int numbytes;
 
-	bool infinite = (nr_dgrams <= 0);
+	bool infinite = (exp_dgrams <= 0);
 
+	console->info("Running UDP listener on port: {}", port);
 	listening = true;
-	while (listening && (infinite || nr_dgrams > 0)) {
+	while (listening && (infinite || exp_dgrams > 0)) {
 		char buf[MAX_DGRAM_LEN];
 		memset(buf, 0, sizeof buf);
 
@@ -264,21 +293,30 @@ int UDPlistener::run(int nr_dgrams) {
 								MAX_DGRAM_LEN - 1,
 								0,
 								(struct sockaddr *)&their_addr,
-								&addr_len) ) == -1) {
-			continue;
-			//throw std::runtime_error("Failed to receive UDP datagram");
+								&addr_len) ) <= 0) {
+			// break if time passed
+			console->info("Socket timeout or recvfrom() error");
+			break;
 		} else {
 			struct sockaddr_in* their_addr_in = (struct sockaddr_in *) &their_addr;
 
 			Datagram* dgram = new Datagram( inet_ntoa(their_addr_in->sin_addr), buf, numbytes);
-
+			// drop datagrams from myself
+			if ( strcmp(dgram->getSender(), Network::getMyIpv4Addr() ) == 0 ) {
+				console->info("Dropped message from myself: {}", dgram->getSender() );
+				delete dgram;
+				continue;
+			}
 			// save received datagram
+			console->info("Received datagram from {}: {}", dgram->getSender(),
+					dgram->getBytes() );
 			receivedUDPs.insert( dgram );
 			if (!infinite)
-				nr_dgrams--;
+				exp_dgrams--;
 		}
 	}
 	listening = false;
+	console->info("Closed UDP listener on port: {}", port);
 	close(udpsock);
 	return 0;
 }
@@ -289,11 +327,14 @@ bool UDPlistener::isListening() {
 
 void UDPlistener::stop() {
 	listening = false;
+	close(udpsock);
 }
 
-void Network::listenUDP(unsigned timeout, int nr_dgrams, int forceport) {
+void Network::listenUDP(unsigned timeout, int exp_dgrams, int forceport) {
 	udplisten.init(timeout, forceport);
-	udplisten.run(nr_dgrams);
+	udplisten.run(exp_dgrams);
 }
 
-
+void listenUDPThread(UDPlistener& udplis, int exp_dgrams) {
+	udplis.run(exp_dgrams);
+}

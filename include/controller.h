@@ -11,15 +11,12 @@
 #ifndef LOGIC_CONTROLLER_H_
 #define LOGIC_CONTROLLER_H_
 
-#include "message.h"
-#include "blockingQueue.h"
-#include "listener.h"
-#include <thread>
 #include <vector>
+#include <thread>
 
 class Controller {
 private:
-	vector<std::thread> threads;
+	std::vector<std::thread> threads;
 
 public:
 	Controller();
@@ -31,7 +28,7 @@ public:
 /* locally triggered operations (by user commands) handled by Controller */
 
 // greeting thread
-void greetingThread();
+bool greetingThread(const char* nick);
 
 // add file thread
 void addFileThread();
