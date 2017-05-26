@@ -7,7 +7,11 @@
 
 #include "networkFileList.h"
 
-std::map<std::string, FileInfo> jsonToFileMap(Json::Value json) {
+// define network file list
+NetworkFileList netFileList;
+
+
+std::map<std::string, FileInfo> jsonToFileMap(Json::Value& json) {
 	std::map<std::string, FileInfo> map;
 	if ( json[0].isNull() ) return map;
 

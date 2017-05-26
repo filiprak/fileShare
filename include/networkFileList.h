@@ -123,7 +123,10 @@ public:
 	}
 };
 
+// network file list
+extern NetworkFileList netFileList;
+
 // parse file info map from json value
-std::map<std::string, FileInfo> jsonToFileMap(Json::Value json);
+std::map<std::string, FileInfo> jsonToFileMap(Json::Value& json);
 
 #endif /* DATA_NETWORKFILELIST_H_ */

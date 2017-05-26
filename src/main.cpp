@@ -65,6 +65,10 @@ int main( int argc, char* argv[] ) {
 		//run controller
 		if (validNick) {
 			responder.setRespondOnlyGreetings(false);
+
+			Network net;
+			MessageREQLIST req(Network::getMyIpv4Addr(), Network::getMyNick());
+			net.broadcastUDP(&req, LISTENER_PORT);
 			while(true);
 		}
 

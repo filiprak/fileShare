@@ -16,22 +16,24 @@
 #define TAG_SENDER			"sender"
 #define TAG_FILENAME		"file"
 #define TAG_FILELIST		"flist"
-#define TAG_RESPORT			"port-nr"
+#define TAG_RESPORT			"resp-port"
 
 
 Json::FastWriter Message::fast_writer;
 
-Message::Message(MSG_TYPE type, const char* sender_ipv4) {
+Message::Message(MSG_TYPE type, const char* sender_ipv4, std::string sender_nick) {
 	this->type = type;
 	this->sender_ipv4 = std::string(sender_ipv4);
+	this->sender_nick = sender_nick;
 }
 
 Message::~Message() {
 	// TODO Auto-generated destructor stub
 }
 
-MessageGREETING::MessageGREETING(const char* sender_ipv4, std::string sender, unsigned rport)
-	: Message(GREETING, sender_ipv4), sender(sender), resp_port(rport) {
+MessageGREETING::MessageGREETING(const char* sender_ipv4, std::string sender_nick, unsigned rport)
+	: Message(GREETING, sender_ipv4, sender_nick), resp_port(rport) {
+
 }
 
 MessageGREETING::~MessageGREETING() {
@@ -39,24 +41,30 @@ MessageGREETING::~MessageGREETING() {
 
 std::string MessageGREETING::jsonify() {
 	Json::Value root;
-	root[TAG_TYPE] = type;
-	root[TAG_SENDER] = sender.c_str();
 	if (resp_port > 0)
-		root[TAG_RESPORT] = resp_port;
+			root[TAG_RESPORT] = resp_port;
+	root[TAG_SENDER] = sender_nick.c_str();
+	root[TAG_TYPE] = type;
 	return Message::fast_writer.write(root);
 }
 
-MessageRESPLIST::MessageRESPLIST(const char* sender_ipv4) : Message(RESPLIST, sender_ipv4) {
-
+MessageRESPLIST::MessageRESPLIST(const char* sender_ipv4, std::string sender_nick, Json::Value& jlist)
+	: Message(RESPLIST, sender_ipv4, sender_nick), jlist(jlist) {
 }
 
 MessageRESPLIST::~MessageRESPLIST() {
 }
 
 std::string MessageRESPLIST::jsonify() {
+	Json::Value root;
+	root[TAG_FILELIST] = jlist;
+	root[TAG_SENDER] = sender_nick.c_str();
+	root[TAG_TYPE] = type;
+	return Message::fast_writer.write(root);
 }
 
-MessageREQLIST::MessageREQLIST(const char* sender_ipv4) : Message(REQLIST, sender_ipv4) {
+MessageREQLIST::MessageREQLIST(const char* sender_ipv4, std::string sender_nick)
+	: Message(REQLIST, sender_ipv4, sender_nick) {
 
 }
 
@@ -64,9 +72,14 @@ MessageREQLIST::~MessageREQLIST() {
 }
 
 std::string MessageREQLIST::jsonify() {
+	Json::Value root;
+	root[TAG_SENDER] = sender_nick.c_str();
+	root[TAG_TYPE] = type;
+	return Message::fast_writer.write(root);
 }
 
-MessageREQFILE::MessageREQFILE(const char* sender_ipv4) : Message(REQFILE, sender_ipv4) {
+MessageREQFILE::MessageREQFILE(const char* sender_ipv4, std::string sender_nick)
+	: Message(REQFILE, sender_ipv4, sender_nick) {
 
 }
 
@@ -76,7 +89,8 @@ MessageREQFILE::~MessageREQFILE() {
 std::string MessageREQFILE::jsonify() {
 }
 
-MessageRESPFILE::MessageRESPFILE(const char* sender_ipv4) : Message(RESPFILE, sender_ipv4) {
+MessageRESPFILE::MessageRESPFILE(const char* sender_ipv4, std::string sender_nick)
+	: Message(RESPFILE, sender_ipv4, sender_nick) {
 
 }
 
@@ -86,7 +100,8 @@ MessageRESPFILE::~MessageRESPFILE() {
 std::string MessageRESPFILE::jsonify() {
 }
 
-MessageREQFDATA::MessageREQFDATA(const char* sender_ipv4) : Message(REQFDATA, sender_ipv4) {
+MessageREQFDATA::MessageREQFDATA(const char* sender_ipv4, std::string sender_nick)
+	: Message(REQFDATA, sender_ipv4, sender_nick) {
 
 }
 
@@ -96,7 +111,8 @@ MessageREQFDATA::~MessageREQFDATA() {
 std::string MessageREQFDATA::jsonify() {
 }
 
-MessageADDFILE::MessageADDFILE(const char* sender_ipv4) : Message(ADDFILE, sender_ipv4) {
+MessageADDFILE::MessageADDFILE(const char* sender_ipv4, std::string sender_nick)
+	: Message(ADDFILE, sender_ipv4, sender_nick) {
 
 }
 
@@ -106,7 +122,8 @@ MessageADDFILE::~MessageADDFILE() {
 std::string MessageADDFILE::jsonify() {
 }
 
-MessageDELFILE::MessageDELFILE(const char* sender_ipv4) : Message(DELFILE, sender_ipv4) {
+MessageDELFILE::MessageDELFILE(const char* sender_ipv4, std::string sender_nick)
+	: Message(DELFILE, sender_ipv4, sender_nick) {
 
 }
 
@@ -116,7 +133,8 @@ MessageDELFILE::~MessageDELFILE() {
 std::string MessageDELFILE::jsonify() {
 }
 
-MessageREVFILE::MessageREVFILE(const char* sender_ipv4) : Message(REVFILE, sender_ipv4) {
+MessageREVFILE::MessageREVFILE(const char* sender_ipv4, std::string sender_nick)
+	: Message(REVFILE, sender_ipv4, sender_nick) {
 
 }
 
@@ -126,7 +144,8 @@ MessageREVFILE::~MessageREVFILE() {
 std::string MessageREVFILE::jsonify() {
 }
 
-MessageLOCFILE::MessageLOCFILE(const char* sender_ipv4) : Message(LOCFILE, sender_ipv4) {
+MessageLOCFILE::MessageLOCFILE(const char* sender_ipv4, std::string sender_nick)
+	: Message(LOCFILE, sender_ipv4, sender_nick) {
 
 }
 
@@ -136,7 +155,8 @@ MessageLOCFILE::~MessageLOCFILE() {
 std::string MessageLOCFILE::jsonify() {
 }
 
-MessageUNLOCFILE::MessageUNLOCFILE(const char* sender_ipv4) : Message(UNLOCFILE, sender_ipv4) {
+MessageUNLOCFILE::MessageUNLOCFILE(const char* sender_ipv4,std::string sender_nick)
+	: Message(UNLOCFILE, sender_ipv4, sender_nick) {
 
 }
 
@@ -213,8 +233,7 @@ Message* parseJSONtoMessage( Datagram* dgram ) {
 
 /* json constructors for messages */
 MessageGREETING::MessageGREETING(const char* sender_ipv4, Json::Value& json)
-	: Message(GREETING, sender_ipv4) {
-	sender = std::string( json[TAG_SENDER].asCString() );
+	: Message(GREETING, sender_ipv4, json[TAG_SENDER].asString()) {
 	if ( json.isMember(TAG_RESPORT) )
 		resp_port = json[TAG_RESPORT].asUInt();
 	else {
@@ -223,41 +242,42 @@ MessageGREETING::MessageGREETING(const char* sender_ipv4, Json::Value& json)
 }
 
 MessageRESPLIST::MessageRESPLIST(const char* sender_ipv4, Json::Value& json)
-	: Message(RESPLIST, sender_ipv4) {
+	: Message(RESPLIST, sender_ipv4, json[TAG_SENDER].asString()) {
+	jlist = json[TAG_FILELIST];
 }
 
 MessageREQLIST::MessageREQLIST(const char* sender_ipv4, Json::Value& json)
-	: Message(REQLIST, sender_ipv4) {
+	: Message(REQLIST, sender_ipv4, json[TAG_SENDER].asString()) {
 }
 
 MessageREQFILE::MessageREQFILE(const char* sender_ipv4, Json::Value& json)
-	: Message(REQFILE, sender_ipv4) {
+	: Message(REQFILE, sender_ipv4, sender_nick) {
 }
 
 MessageRESPFILE::MessageRESPFILE(const char* sender_ipv4, Json::Value& json)
-	: Message(RESPFILE, sender_ipv4) {
+	: Message(RESPFILE, sender_ipv4, sender_nick) {
 }
 
 MessageREQFDATA::MessageREQFDATA(const char* sender_ipv4, Json::Value& json)
-	: Message(REQFDATA, sender_ipv4) {
+	: Message(REQFDATA, sender_ipv4, sender_nick) {
 }
 
 MessageADDFILE::MessageADDFILE(const char* sender_ipv4, Json::Value& json)
-	: Message(ADDFILE, sender_ipv4) {
+	: Message(ADDFILE, sender_ipv4, sender_nick) {
 }
 
 MessageDELFILE::MessageDELFILE(const char* sender_ipv4, Json::Value& json)
-	: Message(DELFILE, sender_ipv4) {
+	: Message(DELFILE, sender_ipv4, sender_nick) {
 }
 
 MessageREVFILE::MessageREVFILE(const char* sender_ipv4, Json::Value& json)
-	: Message(REVFILE, sender_ipv4) {
+	: Message(REVFILE, sender_ipv4, sender_nick) {
 }
 
 MessageLOCFILE::MessageLOCFILE(const char* sender_ipv4, Json::Value& json)
-	: Message(LOCFILE, sender_ipv4) {
+	: Message(LOCFILE, sender_ipv4, sender_nick) {
 }
 
 MessageUNLOCFILE::MessageUNLOCFILE(const char* sender_ipv4, Json::Value& json)
-	: Message(UNLOCFILE, sender_ipv4) {
+	: Message(UNLOCFILE, sender_ipv4, sender_nick) {
 }

@@ -22,14 +22,16 @@ using namespace std;
 class Message {
 public:
 	// ipv4 address of sender
-	string sender_ipv4;
+	std::string sender_ipv4;
+	// sender nickname
+	std::string sender_nick;
 	// message type: GREETING, RESPFILE, ...
 	MSG_TYPE type;
 	// json fast writer
 	static Json::FastWriter fast_writer;
 
 
-	Message(MSG_TYPE type, const char* sender_ipv4);
+	Message(MSG_TYPE type, const char* sender_ipv4, std::string sender_nick);
 	virtual ~Message();
 
 	virtual std::string jsonify() = 0;
@@ -41,25 +43,24 @@ public:
 	MSG_TYPE getType() const {
 		return type;
 	}
+
+	const std::string& getNick() const {
+		return sender_nick;
+	}
 };
 
 class MessageGREETING: public Message {
 private:
-	std::string sender;
 	unsigned resp_port;
 
 public:
 
-	MessageGREETING(const char* sender_ipv4, std::string sender, unsigned rport=0);
+	MessageGREETING(const char* sender_ipv4, std::string sender_nick, unsigned rport=0);
 	MessageGREETING(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageGREETING();
 
 	// generates json format of message
 	virtual std::string jsonify();
-
-	std::string& getSender() {
-		return sender;
-	}
 
 	unsigned getRespPort() const {
 		return resp_port;
@@ -67,20 +68,27 @@ public:
 };
 
 class MessageRESPLIST: public Message {
+private:
+	Json::Value jlist;
+
 public:
 
-	MessageRESPLIST(const char* sender_ipv4);
+	MessageRESPLIST(const char* sender_ipv4, std::string sender_nick, Json::Value& jlist);
 	MessageRESPLIST(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageRESPLIST();
 
 	// generates json format of message
 	virtual std::string jsonify();
+
+	const Json::Value& getJlist() const {
+		return jlist;
+	}
 };
 
 class MessageREQLIST: public Message {
 public:
 
-	MessageREQLIST(const char* sender_ipv4);
+	MessageREQLIST(const char* sender_ipv4, std::string sender_nick);
 	MessageREQLIST(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageREQLIST();
 
@@ -91,7 +99,7 @@ public:
 class MessageREQFILE: public Message {
 public:
 
-	MessageREQFILE(const char* sender_ipv4);
+	MessageREQFILE(const char* sender_ipv4, std::string sender_nick);
 	MessageREQFILE(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageREQFILE();
 
@@ -102,7 +110,7 @@ public:
 class MessageRESPFILE: public Message {
 public:
 
-	MessageRESPFILE(const char* sender_ipv4);
+	MessageRESPFILE(const char* sender_ipv4, std::string sender_nick);
 	MessageRESPFILE(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageRESPFILE();
 
@@ -113,7 +121,7 @@ public:
 class MessageREQFDATA: public Message {
 public:
 
-	MessageREQFDATA(const char* sender_ipv4);
+	MessageREQFDATA(const char* sender_ipv4, std::string sender_nick);
 	MessageREQFDATA(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageREQFDATA();
 
@@ -124,7 +132,7 @@ public:
 class MessageADDFILE: public Message {
 public:
 
-	MessageADDFILE(const char* sender_ipv4);
+	MessageADDFILE(const char* sender_ipv4, std::string sender_nick);
 	MessageADDFILE(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageADDFILE();
 
@@ -135,7 +143,7 @@ public:
 class MessageDELFILE: public Message {
 public:
 
-	MessageDELFILE(const char* sender_ipv4);
+	MessageDELFILE(const char* sender_ipv4, std::string sender_nick);
 	MessageDELFILE(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageDELFILE();
 
@@ -146,7 +154,7 @@ public:
 class MessageREVFILE: public Message {
 public:
 
-	MessageREVFILE(const char* sender_ipv4);
+	MessageREVFILE(const char* sender_ipv4, std::string sender_nick);
 	MessageREVFILE(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageREVFILE();
 
@@ -157,7 +165,7 @@ public:
 class MessageLOCFILE: public Message {
 public:
 
-	MessageLOCFILE(const char* sender_ipv4);
+	MessageLOCFILE(const char* sender_ipv4, std::string sender_nick);
 	MessageLOCFILE(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageLOCFILE();
 
@@ -168,7 +176,7 @@ public:
 class MessageUNLOCFILE: public Message {
 public:
 
-	MessageUNLOCFILE(const char* sender_ipv4);
+	MessageUNLOCFILE(const char* sender_ipv4, std::string sender_nick);
 	MessageUNLOCFILE(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageUNLOCFILE();
 

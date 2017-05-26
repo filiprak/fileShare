@@ -72,10 +72,18 @@ bool Listener::isListening() {
 }
 
 void listenerThread(Listener& listener) {
-	listener.run();
+	try {
+		listener.run();
+	} catch (const std::exception &e) {
+		console->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+	}
 }
 
 void parserThread(Listener& listener) {
-	listener.parse();
+	try {
+		listener.parse();
+	} catch (const std::exception &e) {
+		console->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+	}
 }
 

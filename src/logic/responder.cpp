@@ -11,6 +11,7 @@
 #include <responder.h>
 #include <unistd.h>
 #include <string>
+#include <networkFileList.h>
 
 Responder::Responder(BlockingQueue< Message* >& q) : messq(q) {
 }
@@ -77,7 +78,8 @@ void Responder::run() {
 			}
 		} else {
 			// unknown type of message
-			console->warn("Message {} not responded", m->jsonify() );
+			console->warn("Message {} not responded, respond only greetings: {}",
+					m->jsonify(), respondOnlyGreetings );
 		}
 
 		// if reaches maximum number of allowed running threads
@@ -99,14 +101,14 @@ void Responder::stop() {
 }
 
 void responseGREETINGThread(MessageGREETING* mess) {
-	console->info("Responding on message from {}({})", mess->getSenderIpv4(),
-			mess->getSender() );
+	console->info("Responding on GREETING message from {}({})", mess->getSenderIpv4(),
+			mess->getNick() );
 	Network network;
 	// response on greeting
-	MessageGREETING response(mess->getSenderIpv4().c_str(),
+	MessageGREETING response(Network::getMyIpv4Addr(),
 			Network::getMyNick(),
 			mess->getRespPort());
-	network.sendUDP(response.jsonify().c_str(),
+	network.sendUDP(&response,
 					mess->getSenderIpv4().c_str(),
 					mess->getRespPort() );
 	delete mess;
@@ -123,17 +125,40 @@ void responseREQFDATAThread(MessageREQFDATA* mess) {
 }
 
 void responseREQLISTThread(MessageREQLIST* mess) {
-	sleep(5);
+	console->info("Responding on REQLIST message from {}({})", mess->getSenderIpv4(),
+			mess->getNick() );
+	try {
+		Network network;
+		Json::Value jlist = netFileList.jsonify();
+		MessageRESPLIST response(Network::getMyIpv4Addr(), Network::getMyNick(), jlist);
+		network.broadcastUDP(&response, LISTENER_PORT);
+	} catch (const std::exception &e) {
+		console->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+	}
 	delete mess;
 }
 
 void responseRESPLISTThread(MessageRESPLIST* mess) {
-	sleep(6);
+	console->info("Received RESPLIST message from {}({})", mess->getSenderIpv4(),
+			mess->getNick() );
+	try {
+		Json::Value jlist = mess->getJlist();
+		std::map< std::string, FileInfo > newlist = jsonToFileMap(jlist);
+		netFileList.update(newlist);
+		console->info("Network file list UPDATED successfully");
+
+	} catch (const std::exception &e) {
+		console->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+	}
 	delete mess;
 }
 
 void responseADDFILEThread(MessageADDFILE* mess) {
-	sleep(3);
+	try {
+
+	} catch (const std::exception &e) {
+		console->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+	}
 	delete mess;
 }
 
@@ -150,5 +175,9 @@ void responseUNLOCFILEThread(MessageUNLOCFILE* mess) {
 }
 
 void responderThread(Responder& resp) {
-	resp.run();
+	try {
+		resp.run();
+	} catch (const std::exception &e) {
+		console->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+	}
 }
