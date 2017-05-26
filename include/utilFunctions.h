@@ -12,4 +12,6 @@
 
 std::string strError(std::string cont, std::string prefix="");
 
+double getCurrentTimeSeconds();
+
 #endif /* UTILS_UTILFUNCTIONS_H_ */
