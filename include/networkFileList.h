@@ -109,6 +109,7 @@ public:
 	}
 
 	Json::Value jsonify() {
+		std::unique_lock < std::mutex > lock(_accessMux);
 		Json::Value json;
 		json[0] = Json::Value::null;
 		int j = 0;
@@ -121,5 +122,8 @@ public:
 		return json;
 	}
 };
+
+// parse file info map from json value
+std::map<std::string, FileInfo> jsonToFileMap(Json::Value json);
 
 #endif /* DATA_NETWORKFILELIST_H_ */
