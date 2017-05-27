@@ -27,12 +27,15 @@
 
 std::string usage = "Program usage: command <iface> <nick>\n";
 
-void initLogger() {
+void initLogger(char* nick) {
 	// init logger
-	std::remove(LOG_FILE_NAME);
+
+	// remove old logs if exist
+	std::string logfile = std::string(LOG_FILE_NAME) + "." + std::string(nick) + ".log";
+	std::remove(logfile.c_str());
 
 	logger = spdlog::rotating_logger_mt("logger",
-			LOG_FILE_NAME, 1048576 * 5, 3);
+			logfile.c_str(), 1048576 * 5, 3);
 
 	spdlog::set_pattern("[%H:%M:%S][thread %t]: %v");
 	logger->flush_on(spdlog::level::info);
@@ -40,13 +43,12 @@ void initLogger() {
 
 int main( int argc, char* argv[] ) {
 
-	initLogger();
-
 	if (argc < 3) {
 		printf(usage.c_str());
 		exit(0);
 	}
 
+	initLogger(argv[2]);
 	logger->warn("Starting fileShare program..." );
 
 	BlockingQueue< Message* > messageQueue(MESS_QUEUE_SIZE, false);

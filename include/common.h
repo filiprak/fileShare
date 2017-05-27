@@ -24,7 +24,7 @@
 
 #define MAX_NICK_LEN			32 //chars
 
-#define LOG_FILE_NAME			"fileShare.log"
+#define LOG_FILE_NAME			"fShare"
 
 // protocol message types
 typedef enum {
