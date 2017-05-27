@@ -17,13 +17,15 @@ class Console {
 private:
 	std::mutex mux;
 	Controller* controller = nullptr;
-	WINDOW* inputLine;
-	WINDOW* outputLines;
+	WINDOW* inputLine = nullptr;
+	WINDOW* outputLines = nullptr;
 	bool running = false;
 
 public:
 	Console();
 	virtual ~Console();
+
+	void run();
 
 	void sendFormattedMsg(short prefixColor,
 			const char* prefix, short color, const char* format, ...);

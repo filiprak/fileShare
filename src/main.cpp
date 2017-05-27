@@ -19,6 +19,7 @@
 #include <spdlog/details/spdlog_impl.h>
 #include <unistd.h>
 #include <cstdlib>
+#include <stdio.h>
 #include <exception>
 #include <string>
 #include <console.h>
@@ -59,9 +60,18 @@ int main( int argc, char* argv[] ) {
 	try {
 		// get local ipv4 and broadcast address and save it to Network module
 		Network::initMyAddress( argv[1] );
+	} catch (const std::exception &e) {
+		printf("%s", e.what());
+		exit(0);
+	}
+
+	try {
 		// save my nick to network module
 		Network::setMyNick( argv[2] );
 		logger->info("Your host IPv4: {} ({})", Network::getMyIpv4Addr(), argv[2] );
+
+		// run ncurses ui
+		UI.run();
 
 		// run responder thread
 		std::thread responderT(responderThread, std::ref(responder) );

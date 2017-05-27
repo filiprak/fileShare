@@ -78,9 +78,9 @@ int getIfaceInfo(const char* iface, char* addr, bool braddr) {
 
 void Network::initMyAddress(const char* iface) {
 	if( getIfaceInfo(iface, my_ipv4_addr) != 0)
-		throw std::runtime_error(strError("Cannot find interface IPv4 address", __FUNCTION__));
+		throw std::runtime_error("Cannot find interface IPv4 address\n");
 	if( getIfaceInfo(iface, broadcast_addr, true) != 0)
-		throw std::runtime_error(strError("Cannot determine broadcast address", __FUNCTION__));
+		throw std::runtime_error("Cannot resolve broadcast address\n");
 }
 
 Network::Network() : udplisten(UDP_QUEUE_SIZE) {

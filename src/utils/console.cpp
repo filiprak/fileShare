@@ -14,6 +14,9 @@
 Console UI;
 
 Console::Console() {
+}
+
+void Console::run() {
 	initscr();
 
 	inputLine = newwin(1, COLS, LINES - 1, 0);
