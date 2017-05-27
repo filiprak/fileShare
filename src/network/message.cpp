@@ -178,7 +178,7 @@ Message* parseJSONtoMessage( Datagram* dgram ) {
 		res = Json::parseFromStream(rbuilder, os, &parsed, &errs);
 	} catch(const std::exception &e) {
 		res = false;
-		console->warn("Failed parsing of message: {} from {}, errors: {}",
+		logger->warn("Failed parsing of message: {} from {}, errors: {}",
 				dgram->getBytes(), dgram->getSender(), errs );
 	}
 
@@ -222,7 +222,7 @@ Message* parseJSONtoMessage( Datagram* dgram ) {
 				break;
 			default:
 				//ignore other message types
-				console->warn("Received message of unknown type: {}", parsed[TAG_TYPE].asInt() );
+				logger->warn("Received message of unknown type: {}", parsed[TAG_TYPE].asInt() );
 				break;
 		}
 	}

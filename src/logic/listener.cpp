@@ -17,15 +17,15 @@ Listener::~Listener(){
 }
 
 int Listener::run() {
-	console->info("Starting listener...");
+	logger->info("Starting listener...");
 	network.listenUDP(LISTENER_TIMEOUT, 0, LISTENER_PORT);
-	console->info("Stopped listener...");
+	logger->info("Stopped listener...");
 	return 0;
 }
 
 void Listener::parse() {
 	BlockingQueue< Datagram* >& qdgrams = network.getUdplisten().getReceivedUdPs();
-	console->info("Starting message parser...");
+	logger->info("Starting message parser...");
 	parsing = true;
 	while( parsing ) {
 		Datagram* dgram = qdgrams.take();
@@ -39,7 +39,7 @@ void Listener::parse() {
 			messq.insert(parsed);
 	}
 	parsing = false;
-	console->info("Stopped message parser...");
+	logger->info("Stopped message parser...");
 
 }
 
@@ -75,15 +75,17 @@ void listenerThread(Listener& listener) {
 	try {
 		listener.run();
 	} catch (const std::exception &e) {
-		console->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
 	}
+	logger->flush();
 }
 
 void parserThread(Listener& listener) {
 	try {
 		listener.parse();
 	} catch (const std::exception &e) {
-		console->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
 	}
+	logger->flush();
 }
 

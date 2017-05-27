@@ -33,7 +33,7 @@ public:
 
 	void waitForUpdate() {
 		std::unique_lock < std::mutex > lock(_accessMux);
-		console->info("Waiting for network file list update: max {} sec",
+		logger->info("Waiting for network file list update: max {} sec",
 				WAIT_FOR_UPDATE);
 		_update.wait_for(lock, std::chrono::seconds(WAIT_FOR_UPDATE));
 	}
@@ -103,9 +103,9 @@ public:
 	void use() {
 		waitForUpdate();
 		std::unique_lock < std::mutex > lock(_accessMux);
-		console->info("start using");
+		logger->info("start using");
 		sleep(3);
-		console->info("stop using");
+		logger->info("stop using");
 	}
 
 	Json::Value jsonify() {

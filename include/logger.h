@@ -12,6 +12,6 @@
 #include "spdlog/spdlog.h"
 #include <memory>
 
-extern std::shared_ptr<spdlog::logger> console;
+extern std::shared_ptr<spdlog::logger> logger;
 
 #endif /* INCLUDE_LOGGER_H_ */

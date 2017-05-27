@@ -15,6 +15,7 @@
 #include <queue>
 #include <string>
 #include <future>
+#include <console.h>
 
 Controller::Controller() {
 }
@@ -48,7 +49,9 @@ bool greetingThread(const char* nick) {
 		recvd.pop();
 		if ( m->getType() == GREETING) {
 			if ( ((MessageGREETING*) m)->getNick() == std::string(nick) ) {
-				console->error("Nick '{}' is already used by host: {}", nick, m->getSenderIpv4() );
+				UI.sendFormattedMsg(COLOR_RED, "", COLOR_RED,
+						"Nick '%s' is already used by host: %s\n", nick, m->getSenderIpv4().c_str());
+				logger->error("Nick '{}' is already used by host: {}", nick, m->getSenderIpv4() );
 				validNick = false;
 				delete m;
 				break;

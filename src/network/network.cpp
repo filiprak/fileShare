@@ -132,7 +132,7 @@ void Network::sendUDP(const char* data, const char* ipv4, int dest_port) {
 		throw std::runtime_error( strError("Some data was lost while sending UDP datagram",
 				__FUNCTION__) );
 	}
-	console->info("Sent UDP datagram to {}:{}: {}", ipv4, dest_port, data);
+	logger->info("Sent UDP datagram to {}:{}: {}", ipv4, dest_port, data);
 	close(udpsock);
 }
 
@@ -180,7 +180,7 @@ void Network::broadcastUDP(const char* data, int dest_port) {
 		throw std::runtime_error("Some data was lost while broadcasting UDP datagram");
 	}
 
-	console->info("Sent broadcast to ports {}: {}", dest_port, data);
+	logger->info("Sent broadcast to ports {}: {}", dest_port, data);
 	close(udpsock);
 }
 
@@ -211,7 +211,6 @@ void UDPlistener::init(unsigned timeout, int forceport) {
 		throw std::runtime_error( strError("UDP socket is listening now, attepmt to reinitialize existing socket",
 				__FUNCTION__) );
 
-	close(udpsock);
 	receivedUDPs.clear();
 
 	struct timeval tv;
@@ -282,7 +281,7 @@ int UDPlistener::run(int exp_dgrams) {
 
 	bool infinite = (exp_dgrams <= 0);
 
-	console->info("Running UDP listener on port: {}", port);
+	logger->info("Running UDP listener on port: {}", port);
 	listening = true;
 	while (listening && (infinite || exp_dgrams > 0)) {
 		char buf[MAX_DGRAM_LEN];
@@ -295,7 +294,7 @@ int UDPlistener::run(int exp_dgrams) {
 								(struct sockaddr *)&their_addr,
 								&addr_len) ) <= 0) {
 			// break if time passed
-			console->info("Socket timeout or recvfrom() error");
+			logger->info("Socket timeout or recvfrom() error");
 			break;
 		} else {
 			struct sockaddr_in* their_addr_in = (struct sockaddr_in *) &their_addr;
@@ -303,12 +302,12 @@ int UDPlistener::run(int exp_dgrams) {
 			Datagram* dgram = new Datagram( inet_ntoa(their_addr_in->sin_addr), buf, numbytes);
 			// drop datagrams from myself
 			if ( strcmp(dgram->getSender(), Network::getMyIpv4Addr() ) == 0 ) {
-				console->info("Dropped message from myself: {}", dgram->getSender() );
+				logger->info("Dropped message from myself: {}", dgram->getSender() );
 				delete dgram;
 				continue;
 			}
 			// save received datagram
-			console->info("Received datagram from {}: {}", dgram->getSender(),
+			logger->info("Received datagram from {}: {}", dgram->getSender(),
 					dgram->getBytes() );
 			receivedUDPs.insert( dgram );
 			if (!infinite)
@@ -316,7 +315,7 @@ int UDPlistener::run(int exp_dgrams) {
 		}
 	}
 	listening = false;
-	console->info("Closed UDP listener on port: {}", port);
+	logger->info("Closed UDP listener on port: {}", port);
 	close(udpsock);
 	return 0;
 }
@@ -327,7 +326,6 @@ bool UDPlistener::isListening() {
 
 void UDPlistener::stop() {
 	listening = false;
-	close(udpsock);
 }
 
 void Network::listenUDP(unsigned timeout, int exp_dgrams, int forceport) {

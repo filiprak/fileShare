@@ -21,7 +21,7 @@ Responder::~Responder() {
 }
 
 void Responder::run() {
-	console->info("Starting responder...");
+	logger->info("Starting responder...");
 	running = true;
 	while(running) {
 		Message* m = messq.take();
@@ -73,12 +73,12 @@ void Responder::run() {
 					break;
 				default:
 					//ignore other message types
-					console->warn("Message {} not responded", m->jsonify() );
+					logger->warn("Message {} not responded", m->jsonify() );
 					break;
 			}
 		} else {
 			// unknown type of message
-			console->warn("Message {} not responded, respond only greetings: {}",
+			logger->warn("Message {} not responded, respond only greetings: {}",
 					m->jsonify(), respondOnlyGreetings );
 		}
 
@@ -89,7 +89,7 @@ void Responder::run() {
 		}
 	}
 	running = false;
-	console->info("Stopped responder...");
+	logger->info("Stopped responder...");
 	joinThreads();
 	threads.clear();
 }
@@ -101,7 +101,7 @@ void Responder::stop() {
 }
 
 void responseGREETINGThread(MessageGREETING* mess) {
-	console->info("Responding on GREETING message from {}({})", mess->getSenderIpv4(),
+	logger->info("Responding on GREETING message from {}({})", mess->getSenderIpv4(),
 			mess->getNick() );
 	Network network;
 	// response on greeting
@@ -125,7 +125,7 @@ void responseREQFDATAThread(MessageREQFDATA* mess) {
 }
 
 void responseREQLISTThread(MessageREQLIST* mess) {
-	console->info("Responding on REQLIST message from {}({})", mess->getSenderIpv4(),
+	logger->info("Responding on REQLIST message from {}({})", mess->getSenderIpv4(),
 			mess->getNick() );
 	try {
 		Network network;
@@ -133,23 +133,24 @@ void responseREQLISTThread(MessageREQLIST* mess) {
 		MessageRESPLIST response(Network::getMyIpv4Addr(), Network::getMyNick(), jlist);
 		network.broadcastUDP(&response, LISTENER_PORT);
 	} catch (const std::exception &e) {
-		console->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
 	}
 	delete mess;
 }
 
 void responseRESPLISTThread(MessageRESPLIST* mess) {
-	console->info("Received RESPLIST message from {}({})", mess->getSenderIpv4(),
+	logger->info("Received RESPLIST message from {}({})", mess->getSenderIpv4(),
 			mess->getNick() );
 	try {
 		Json::Value jlist = mess->getJlist();
 		std::map< std::string, FileInfo > newlist = jsonToFileMap(jlist);
 		netFileList.update(newlist);
-		console->info("Network file list UPDATED successfully");
+		logger->info("Network file list UPDATED successfully");
 
 	} catch (const std::exception &e) {
-		console->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
 	}
+	logger->flush();
 	delete mess;
 }
 
@@ -157,8 +158,9 @@ void responseADDFILEThread(MessageADDFILE* mess) {
 	try {
 
 	} catch (const std::exception &e) {
-		console->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
 	}
+	logger->flush();
 	delete mess;
 }
 
@@ -178,6 +180,7 @@ void responderThread(Responder& resp) {
 	try {
 		resp.run();
 	} catch (const std::exception &e) {
-		console->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
 	}
+	logger->flush();
 }

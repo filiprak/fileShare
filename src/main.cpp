@@ -21,22 +21,37 @@
 #include <cstdlib>
 #include <exception>
 #include <string>
+#include <console.h>
 
 
-std::string usage = "Program usage: command <iface> <nick>";
+std::string usage = "Program usage: command <iface> <nick>\n";
 
+void initLogger() {
+	// init logger
+	std::remove(LOG_FILE_NAME);
+
+	logger = spdlog::rotating_logger_mt("logger",
+			LOG_FILE_NAME, 1048576 * 5, 3);
+
+	spdlog::set_pattern("[%H:%M:%S][thread %t]: %v");
+	logger->flush_on(spdlog::level::info);
+}
 
 int main( int argc, char* argv[] ) {
-	spdlog::set_pattern("[%H:%M:%S][thread %t]: %v");
+
+	initLogger();
+
 	if (argc < 3) {
-		console->error(usage);
+		printf(usage.c_str());
 		exit(0);
 	}
 
-	console->warn("Starting fileShare program..." );
+	logger->warn("Starting fileShare program..." );
 
 	BlockingQueue< Message* > messageQueue(MESS_QUEUE_SIZE, false);
 	Controller controller;
+	UI.setController(&controller);
+
 	Listener listener(messageQueue);
 	Responder responder(messageQueue);
 	responder.setRespondOnlyGreetings(true);
@@ -46,7 +61,7 @@ int main( int argc, char* argv[] ) {
 		Network::initMyAddress( argv[1] );
 		// save my nick to network module
 		Network::setMyNick( argv[2] );
-		console->info("Your host IPv4: {} ({})", Network::getMyIpv4Addr(), argv[2] );
+		logger->info("Your host IPv4: {} ({})", Network::getMyIpv4Addr(), argv[2] );
 
 		// run responder thread
 		std::thread responderT(responderThread, std::ref(responder) );
@@ -69,7 +84,17 @@ int main( int argc, char* argv[] ) {
 			Network net;
 			MessageREQLIST req(Network::getMyIpv4Addr(), Network::getMyNick());
 			net.broadcastUDP(&req, LISTENER_PORT);
-			while(true);
+
+			// run user interface
+			UI.sendFormattedMsg(COLOR_YELLOW, "", COLOR_YELLOW, "Welcome to fileShare !\n");
+			UI.sendFormattedMsg(COLOR_WHITE, "Your IPv4 address: ", COLOR_YELLOW,
+					"%s\n", Network::getMyIpv4Addr());
+			UI.sendFormattedMsg(COLOR_WHITE, "Your nick: ", COLOR_YELLOW,
+								"%s\n", Network::getMyNick().c_str());
+			while( UI.isRunning() ) {
+				UI.inputLoop();
+				usleep(5000);
+			}
 		}
 
 		// stop threads
@@ -85,10 +110,11 @@ int main( int argc, char* argv[] ) {
 
 
 	} catch (const std::exception &e) {
-		console->error(  std::string("Exception occured: ") + std::string(e.what())  );
+		logger->error(  std::string("Exception occured: ") + std::string(e.what())  );
+		logger->flush();
 	}
 
-	console->warn("Exciting fileShare program...");
+	logger->warn("Exciting fileShare program...");
 	return 0;
 }
 
