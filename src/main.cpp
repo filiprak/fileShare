@@ -106,6 +106,8 @@ int main( int argc, char* argv[] ) {
 				usleep(5000);
 			}
 		}
+		// destroy ncurses windows
+		UI.exit();
 
 		// stop threads
 		listener.stop();

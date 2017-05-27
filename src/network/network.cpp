@@ -19,6 +19,7 @@
 #include <utilFunctions.h>
 #include <cstring>
 #include <stdexcept>
+#include <console.h>
 
 
 char Network::broadcast_addr[];
@@ -329,8 +330,15 @@ void UDPlistener::stop() {
 }
 
 void Network::listenUDP(unsigned timeout, int exp_dgrams, int forceport) {
-	udplisten.init(timeout, forceport);
-	udplisten.run(exp_dgrams);
+	try {
+		udplisten.init(timeout, forceport);
+		udplisten.run(exp_dgrams);
+
+	} catch (const std::exception& e) {
+		UI.error("Network: ", e.what());
+		logger->error("Exception in Network: {}: {}", __FUNCTION__, e.what());
+		logger->flush();
+	}
 }
 
 void listenUDPThread(UDPlistener& udplis, int exp_dgrams) {

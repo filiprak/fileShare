@@ -9,6 +9,7 @@
 #include <datagram.h>
 #include <listener.h>
 #include <logger.h>
+#include <console.h>
 
 Listener::Listener(BlockingQueue< Message* >& q) : messq(q)  {
 }
@@ -44,18 +45,24 @@ void Listener::parse() {
 }
 
 void Listener::stop() {
-	network.getUdplisten().stop();
-	parsing = false;
+	try {
+		network.getUdplisten().stop();
+		parsing = false;
 
-	Datagram* poison_pill = new Datagram("pill", "pill", 2);
-	network.getUdplisten().getReceivedUdPs().insert(poison_pill);
+		Datagram* poison_pill = new Datagram("pill", "pill", 2);
+		network.getUdplisten().getReceivedUdPs().insert(poison_pill);
 
-	MessageGREETING poison_pill2("pill", "pill");
-	network.sendUDP(&poison_pill2, Network::getMyIpv4Addr(), LISTENER_PORT);
-	//clear message queue
-	while( messq.notEmpty() ) {
-		delete messq.take();
+		MessageGREETING poison_pill2("pill", "pill");
+		network.sendUDP(&poison_pill2, Network::getMyIpv4Addr(), LISTENER_PORT);
+		//clear message queue
+		while( messq.notEmpty() ) {
+			delete messq.take();
+		}
+	} catch (const std::exception &e) {
+		UI.error("Listener stop: %s", e.what());
+		logger->error( "Exception in Listener: '{}': {}", __FUNCTION__, e.what() );
 	}
+	logger->flush();
 }
 
 void Listener::clearQueues() {
@@ -74,7 +81,9 @@ bool Listener::isListening() {
 void listenerThread(Listener& listener) {
 	try {
 		listener.run();
+
 	} catch (const std::exception &e) {
+		UI.error("Listener: %s", e.what());
 		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
 	}
 	logger->flush();
@@ -83,7 +92,9 @@ void listenerThread(Listener& listener) {
 void parserThread(Listener& listener) {
 	try {
 		listener.parse();
+
 	} catch (const std::exception &e) {
+		UI.error("Parser: %s", e.what());
 		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
 	}
 	logger->flush();

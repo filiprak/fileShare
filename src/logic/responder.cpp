@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <string>
 #include <networkFileList.h>
+#include <console.h>
 
 Responder::Responder(BlockingQueue< Message* >& q) : messq(q) {
 }
@@ -103,14 +104,19 @@ void Responder::stop() {
 void responseGREETINGThread(MessageGREETING* mess) {
 	logger->info("Responding on GREETING message from {}({})", mess->getSenderIpv4(),
 			mess->getNick() );
-	Network network;
-	// response on greeting
-	MessageGREETING response(Network::getMyIpv4Addr(),
-			Network::getMyNick(),
-			mess->getRespPort());
-	network.sendUDP(&response,
-					mess->getSenderIpv4().c_str(),
-					mess->getRespPort() );
+	try {
+		Network network;
+		// response on greeting
+		MessageGREETING response(Network::getMyIpv4Addr(),
+				Network::getMyNick(),
+				mess->getRespPort());
+		network.sendUDP(&response,
+						mess->getSenderIpv4().c_str(),
+						mess->getRespPort() );
+	} catch (const std::exception &e) {
+		UI.error("response GREETING: %s", e.what());
+		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+	}
 	delete mess;
 }
 
@@ -133,6 +139,7 @@ void responseREQLISTThread(MessageREQLIST* mess) {
 		MessageRESPLIST response(Network::getMyIpv4Addr(), Network::getMyNick(), jlist);
 		network.broadcastUDP(&response, LISTENER_PORT);
 	} catch (const std::exception &e) {
+		UI.error("response REQLIST: %s", e.what());
 		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
 	}
 	delete mess;
@@ -148,6 +155,7 @@ void responseRESPLISTThread(MessageRESPLIST* mess) {
 		logger->info("Network file list UPDATED successfully");
 
 	} catch (const std::exception &e) {
+		UI.error("response RESPLIST: %s", e.what());
 		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
 	}
 	logger->flush();

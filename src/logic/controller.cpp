@@ -27,45 +27,53 @@ void Controller::run() {
 }
 
 bool greetingThread(const char* nick) {
-	// broadcast greeting message
-	// create greeting listener
-	Network greetNet;
-	UDPlistener& greetLis = greetNet.getUdplisten();
+	try {
+		// broadcast greeting message
+		// create greeting listener
+		Network greetNet;
+		UDPlistener& greetLis = greetNet.getUdplisten();
 
-	greetLis.init(GREETING_TIMEOUT);
+		greetLis.init(GREETING_TIMEOUT);
 
-	MessageGREETING greet(Network::getMyIpv4Addr(), nick,
-					greetLis.getPort() );
+		MessageGREETING greet(Network::getMyIpv4Addr(), nick,
+						greetLis.getPort() );
 
-	auto future = std::async( &UDPlistener::receiveMessages, &greetLis );
-	// broadcast greeting message
-	greetNet.broadcastUDP( &greet, LISTENER_PORT );
+		auto future = std::async( &UDPlistener::receiveMessages, &greetLis );
+		// broadcast greeting message
+		greetNet.broadcastUDP( &greet, LISTENER_PORT );
 
-	std::queue< Message* > recvd = future.get();
+		std::queue< Message* > recvd = future.get();
 
-	bool validNick = true;
-	while( !recvd.empty() ) {
-		Message* m = recvd.front();
-		recvd.pop();
-		if ( m->getType() == GREETING) {
-			if ( ((MessageGREETING*) m)->getNick() == std::string(nick) ) {
-				UI.sendFormattedMsg(COLOR_RED, "", COLOR_RED,
-						"Nick '%s' is already used by host: %s\n", nick, m->getSenderIpv4().c_str());
-				logger->error("Nick '{}' is already used by host: {}", nick, m->getSenderIpv4() );
-				validNick = false;
-				delete m;
-				break;
+		bool validNick = true;
+		while( !recvd.empty() ) {
+			Message* m = recvd.front();
+			recvd.pop();
+			if ( m->getType() == GREETING) {
+				if ( ((MessageGREETING*) m)->getNick() == std::string(nick) ) {
+					UI.sendFormattedMsg(COLOR_RED, "", COLOR_RED,
+							"Nick '%s' is already used by host: %s\n", nick, m->getSenderIpv4().c_str());
+					logger->error("Nick '{}' is already used by host: {}", nick, m->getSenderIpv4() );
+					validNick = false;
+					delete m;
+					break;
+				}
 			}
+			delete m;
 		}
-		delete m;
+		// clear
+		while( !recvd.empty() ) {
+			Message* m = recvd.front();
+			recvd.pop();
+			delete m;
+		}
+
+		return validNick;
+
+	} catch (const std::exception& e) {
+		logger->error("Exception in: {}: {}", __FUNCTION__, e.what());
+		return false;
 	}
-	// clear
-	while( !recvd.empty() ) {
-		Message* m = recvd.front();
-		recvd.pop();
-		delete m;
-	}
-	return validNick;
+
 }
 
 void addFileThread() {

@@ -29,6 +29,13 @@ public:
 
 	void sendFormattedMsg(short prefixColor,
 			const char* prefix, short color, const char* format, ...);
+
+	void error(const char* format, ...);
+
+	void info(const char* format, ...);
+
+	void warning(const char* format, ...);
+
 	void inputLoop(void);
 
 	bool isRunning() const {
@@ -38,6 +45,8 @@ public:
 	void stop() {
 		running = false;
 	}
+
+	void exit();
 
 	void setController(Controller* controller) {
 		this->controller = controller;

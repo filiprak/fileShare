@@ -44,8 +44,33 @@ void Console::run() {
 	running = true;
 }
 
+void Console::error(const char* format, ...) {
+	if (!running) return;
+	va_list args;
+	va_start(args, format);
+	sendFormattedMsg(COLOR_RED, "Error: ", COLOR_RED, format, args);
+	va_end(args);
+}
+
+void Console::info(const char* format, ...) {
+	if (!running) return;
+	va_list args;
+	va_start(args, format);
+	sendFormattedMsg(COLOR_GREEN, "Info: ", COLOR_WHITE, format, args);
+	va_end(args);
+}
+
+void Console::warning(const char* format, ...) {
+	if (!running) return;
+	va_list args;
+	va_start(args, format);
+	sendFormattedMsg(COLOR_YELLOW, "Warning: ", COLOR_YELLOW, format, args);
+	va_end(args);
+}
+
 void Console::sendFormattedMsg(short prefixColor,
 		const char* prefix, short color, const char* format, ...) {
+	if (!running) return;
 	mux.lock();
     va_list args;
     va_start(args, format);
@@ -114,9 +139,14 @@ void Console::inputLoop(void) {
     }
 }
 
-Console::~Console() {
+void Console::exit() {
+	running = false;
 	delwin(inputLine);
 	delwin(outputLines);
 	endwin();
+}
+
+Console::~Console() {
+
 }
 
