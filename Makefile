@@ -32,8 +32,8 @@ OBJECTS = $(SOURCES:$(SRC_PATH)/%.$(SRC_EXT)=$(BUILD_PATH)/%.o)
 DEPS = $(OBJECTS:.o=.d)
 
 # flags #
-COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g
-LINKER_FLAGS = -lpthread
+COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g -m32
+LINKER_FLAGS = -lpthread -lncurses -m32
 INCLUDES = -I include/
 
 # Space-separated pkg-config libraries used by this project
