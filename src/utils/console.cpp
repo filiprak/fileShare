@@ -80,7 +80,11 @@ void Console::sendFormattedMsg(short prefixColor,
 		const char* prefix, short color, const char* format, va_list args) {
 	if (!running) return;;
 
-	format = (std::string(format) + "\n").c_str();
+	//append new line to format
+	int size = strlen(format);
+	char* formatln = new char[size + 2];
+
+	snprintf(formatln, size + 2, "%s\n", format);
 
     mux.lock();
 	if (has_colors()) {
@@ -89,19 +93,21 @@ void Console::sendFormattedMsg(short prefixColor,
 			wprintw(outputLines, prefix);
 		}
 
-		if (color == COLOR_WHITE)
-			wattroff(outputLines, A_BOLD);
+		//if (color == COLOR_WHITE)
+		wattroff(outputLines, A_BOLD);
 		wattron(outputLines, COLOR_PAIR(color));
-		vwprintw(outputLines, format, args);
+		vwprintw(outputLines, formatln, args);
 
 		wattroff(outputLines, A_BOLD | COLOR_PAIR(color));
+
 	} else {
 		wprintw(outputLines, prefix);
-		vwprintw(outputLines, format, args);
+		vwprintw(outputLines, formatln, args);
 	}
 
     wrefresh(outputLines);
     mux.unlock();
+    delete [] formatln;
 }
 
 void Console::inputLoop(void) {
@@ -127,10 +133,9 @@ void Console::inputLoop(void) {
     switch (c) {
 		case '\n':
 			if (input.size() > 0) {
-				info("command: %s", input.c_str());
-
 				wprintw(inputLine, "%s\n", input);
-				if (input == "q") running = false;
+				// run user command
+				controller->runCommand(input);
 				input.clear();
 			}
 			break;
