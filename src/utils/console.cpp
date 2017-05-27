@@ -68,13 +68,21 @@ void Console::warning(const char* format, ...) {
 	va_end(args);
 }
 
-void Console::sendFormattedMsg(short prefixColor,
-		const char* prefix, short color, const char* format, ...) {
+void Console::msg(const char* prefix, const char* format, ...) {
 	if (!running) return;
-	mux.lock();
-    va_list args;
-    va_start(args, format);
+	va_list args;
+	va_start(args, format);
+	sendFormattedMsg(COLOR_YELLOW, prefix, COLOR_WHITE, format, args);
+	va_end(args);
+}
 
+void Console::sendFormattedMsg(short prefixColor,
+		const char* prefix, short color, const char* format, va_list args) {
+	if (!running) return;;
+
+	format = (std::string(format) + "\n").c_str();
+
+    mux.lock();
 	if (has_colors()) {
 		if (prefix) {
 			wattron(outputLines, A_BOLD | COLOR_PAIR(prefixColor));
@@ -93,7 +101,6 @@ void Console::sendFormattedMsg(short prefixColor,
 	}
 
     wrefresh(outputLines);
-    va_end(args);
     mux.unlock();
 }
 
@@ -120,7 +127,7 @@ void Console::inputLoop(void) {
     switch (c) {
 		case '\n':
 			if (input.size() > 0) {
-				sendFormattedMsg(COLOR_WHITE, ">: ", COLOR_WHITE, input.c_str());
+				info("command: %s", input.c_str());
 
 				wprintw(inputLine, "%s\n", input);
 				if (input == "q") running = false;

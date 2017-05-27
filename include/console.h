@@ -21,14 +21,16 @@ private:
 	WINDOW* outputLines = nullptr;
 	bool running = false;
 
+	void sendFormattedMsg(short prefixColor,
+				const char* prefix, short color, const char* format, va_list args);
+
 public:
 	Console();
 	virtual ~Console();
 
 	void run();
 
-	void sendFormattedMsg(short prefixColor,
-			const char* prefix, short color, const char* format, ...);
+	void msg(const char* prefix, const char* format, ...);
 
 	void error(const char* format, ...);
 

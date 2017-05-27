@@ -98,11 +98,12 @@ int main( int argc, char* argv[] ) {
 			net.broadcastUDP(&req, LISTENER_PORT);
 
 			// run user interface
-			UI.sendFormattedMsg(COLOR_YELLOW, "", COLOR_YELLOW, "Welcome to fileShare !\n");
-			UI.sendFormattedMsg(COLOR_WHITE, "Your IPv4 address: ", COLOR_YELLOW,
-					"%s\n", Network::getMyIpv4Addr());
-			UI.sendFormattedMsg(COLOR_WHITE, "Your nick: ", COLOR_YELLOW,
-								"%s\n", Network::getMyNick().c_str());
+			UI.msg("Welcome to fileShare !", "");
+			UI.msg("----------------------------------------------<<<", "");
+			UI.msg("Your IPv4 address: ", "%s", Network::getMyIpv4Addr());
+			UI.msg("Your nick: ", "%s", Network::getMyNick().c_str());
+			UI.msg("----------------------------------------------<<<", "");
+
 			while( UI.isRunning() ) {
 				UI.inputLoop();
 				usleep(5000);
