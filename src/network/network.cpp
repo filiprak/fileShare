@@ -171,10 +171,10 @@ void Network::broadcastUDP(const char* data, int dest_port) {
 		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
 	}
 	/* Send another packet to the destination specified above */
-	if ((numbytes=sendto(udpsock, data, strlen(data), 0,
-	    (struct sockaddr *) &destAddr, sizeof destAddr)) == -1) {
+	if ((numbytes = sendto(udpsock, data, strlen(data), 0,
+			(struct sockaddr *) &destAddr, sizeof destAddr)) == -1) {
 		close(udpsock);
-		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
+		throw std::runtime_error(strError(strerror(errno), __FUNCTION__));
 	}
 	if (numbytes < strlen(data)) {
 		close(udpsock);

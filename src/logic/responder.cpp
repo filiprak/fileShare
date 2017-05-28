@@ -164,6 +164,11 @@ void responseRESPLISTThread(MessageRESPLIST* mess) {
 
 void responseADDFILEThread(MessageADDFILE* mess) {
 	try {
+		FileInfo f = mess->getAddedFile();
+		bool res = netFileList.addFile( f );
+		if (!res)
+			logger->warn("{}: File: {} not added to network-list",
+					__FUNCTION__, f.jsonify().toStyledString() );
 
 	} catch (const std::exception &e) {
 		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
@@ -173,6 +178,18 @@ void responseADDFILEThread(MessageADDFILE* mess) {
 }
 
 void responseDELFILEThread(MessageDELFILE* mess) {
+	try {
+		FileInfo f = mess->getDeletedFile();
+		bool res = netFileList.deleteFile( f.getName() );
+		if (!res)
+			logger->warn("{}: File: {} not deleted from network-list",
+					__FUNCTION__, f.jsonify().toStyledString() );
+
+	} catch (const std::exception &e) {
+		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+	}
+	logger->flush();
+	delete mess;
 }
 
 void responseREVFILEThread(MessageREVFILE* mess) {

@@ -17,6 +17,7 @@
 #include <future>
 #include <console.h>
 #include "utilFunctions.h"
+#include "networkFileList.h"
 
 Controller::Controller() {
 }
@@ -148,13 +149,78 @@ bool greetingThread(const char* nick) {
 
 }
 
+void broadcastListRequest() {
+	Network network;
+	MessageREQLIST reqlist(Network::getMyIpv4Addr(), Network::getMyNick());
+	network.broadcastUDP(&reqlist, LISTENER_PORT);
+}
+
 void showListThread(std::string filter) {
-	UI.warning(__FUNCTION__);
-	sleep(5);
+	try {
+
+		auto future = std::async( &NetworkFileList::getFileList, &netFileList );
+		//send update request
+		broadcastListRequest();
+		UI.info("Synchronizing file list... please wait...");
+		//wait for list update
+		std::map< std::string, FileInfo > fmap = future.get();
+
+		std::string list = fileMapToString(filter, fmap);
+		UI.msg("Filelist:\n", "%s", list.c_str());
+
+	} catch (std::exception& e) {
+		UI.error("Updating list: %s", e.what());
+		logger->error("Exception in: {}: {}", __FUNCTION__, e.what());
+	}
 }
 
 void addFileThread(std::string filename) {
-	UI.warning(__FUNCTION__);
+	FileInfo f(filename, Network::getMyNick(), 344554);
+
+	try {
+		Network network;
+		//send update request
+		broadcastListRequest();
+		UI.info("Synchronizing file list... please wait...");
+		//check if file exists
+		if (!netFileList.hasFile(filename)) {
+			f.setAddTime(getCurrentTimeSeconds());
+			MessageADDFILE msgadd(Network::getMyIpv4Addr(),
+						Network::getMyNick(), f);
+			network.broadcastUDP(&msgadd, LISTENER_PORT);
+			netFileList.addFile(f);
+			UI.info("File '%s' was added successfully", filename.c_str());
+
+		} else
+			UI.error("File '%s' already exists", filename.c_str() );
+
+	} catch (std::exception& e) {
+		UI.error("Updating list: %s", e.what());
+		logger->error("Exception in: {}: {}", __FUNCTION__, e.what());
+	}
+}
+
+void deleteFileThread(std::string filename) {
+
+	try {
+		Network network;
+
+		bool found;
+		FileInfo ftodel = netFileList.getFileInfo(filename, &found);
+		if (found && ftodel.getOwner() == Network::getMyNick()) {
+			MessageDELFILE msgdel(Network::getMyIpv4Addr(),
+						Network::getMyNick(), ftodel);
+			network.broadcastUDP(&msgdel, LISTENER_PORT);
+			netFileList.deleteFile(filename);
+			UI.info("File '%s' was deleted successfully", filename.c_str());
+		} else {
+			UI.error("File '%s' cannot be deleted", filename.c_str() );
+		}
+
+	} catch (std::exception& e) {
+		UI.error("Updating list: %s", e.what());
+		logger->error("Exception in: {}: {}", __FUNCTION__, e.what());
+	}
 }
 
 void downloadFileThread(std::string filename) {
@@ -170,9 +236,5 @@ void unlockFileThread(std::string filename) {
 }
 
 void revokeFileThread(std::string filename) {
-	UI.warning(__FUNCTION__);
-}
-
-void deleteFileThread(std::string filename) {
 	UI.warning(__FUNCTION__);
 }

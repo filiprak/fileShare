@@ -19,7 +19,7 @@
 #include <chrono>
 #include "logger.h"
 
-#define WAIT_FOR_UPDATE		3//seconds
+#define WAIT_FOR_UPDATE		2//seconds
 
 class NetworkFileList {
 private:
@@ -46,10 +46,17 @@ public:
 		_update.notify_all();
 	}
 
-	bool addFile(FileInfo& file) {
+	bool hasFile(std::string filename) {
+		waitForUpdate();
 		std::unique_lock < std::mutex > lock(_accessMux);
-		sleep(1);
-		if (fileList.count(file.getName()) == 1) {
+		if ( fileList.count(filename) > 0)
+			return true;
+		return false;
+	}
+
+	bool addFile(FileInfo file) {
+		std::unique_lock < std::mutex > lock(_accessMux);
+		if (fileList.count(file.getName()) > 0) {
 			if (fileList[file.getName()].getAddTime()
 					<= file.getAddTime()) {
 				return false;
@@ -100,12 +107,14 @@ public:
 		return false;
 	}
 
-	void use() {
-		waitForUpdate();
+	FileInfo getFileInfo(std::string filename, bool* found) {
 		std::unique_lock < std::mutex > lock(_accessMux);
-		logger->info("start using");
-		sleep(3);
-		logger->info("stop using");
+		if ( fileList.count(filename) < 1 ) {
+			*found = false;
+			return FileInfo();
+		}
+		*found = true;
+		return fileList[filename];
 	}
 
 	Json::Value jsonify() {
@@ -121,6 +130,12 @@ public:
 			}
 		return json;
 	}
+
+	std::map<std::string, FileInfo> getFileList() {
+		waitForUpdate();
+		std::unique_lock < std::mutex > lock(_accessMux);
+		return fileList;
+	}
 };
 
 // network file list
@@ -128,5 +143,6 @@ extern NetworkFileList netFileList;
 
 // parse file info map from json value
 std::map<std::string, FileInfo> jsonToFileMap(Json::Value& json);
+std::string fileMapToString(std::string& filter, std::map<std::string, FileInfo>& filemap);
 
 #endif /* DATA_NETWORKFILELIST_H_ */

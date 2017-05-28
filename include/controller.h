@@ -39,6 +39,9 @@ public:
 	void joinThreads();
 };
 
+// broadcasts list request, may throw exceptions
+void broadcastListRequest();
+
 /* locally triggered operations (by user commands) handled by Controller */
 
 // greeting thread

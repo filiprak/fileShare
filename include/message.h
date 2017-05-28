@@ -14,6 +14,7 @@
 #include <common.h>
 #include <json/json.h>
 #include <string>
+#include <fileinfo.h>
 
 class Datagram;
 
@@ -130,25 +131,41 @@ public:
 };
 
 class MessageADDFILE: public Message {
+private:
+	FileInfo added_file;
+
 public:
 
-	MessageADDFILE(const char* sender_ipv4, std::string sender_nick);
+	MessageADDFILE(const char* sender_ipv4, std::string sender_nick,
+			FileInfo file);
 	MessageADDFILE(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageADDFILE();
 
 	// generates json format of message
 	virtual std::string jsonify();
+
+	FileInfo getAddedFile() {
+		return added_file;
+	}
 };
 
 class MessageDELFILE: public Message {
+private:
+	FileInfo deleted_file;
+
 public:
 
-	MessageDELFILE(const char* sender_ipv4, std::string sender_nick);
+	MessageDELFILE(const char* sender_ipv4, std::string sender_nick,
+			FileInfo file);
 	MessageDELFILE(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageDELFILE();
 
 	// generates json format of message
 	virtual std::string jsonify();
+
+	FileInfo getDeletedFile() {
+		return deleted_file;
+	}
 };
 
 class MessageREVFILE: public Message {

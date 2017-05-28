@@ -14,7 +14,7 @@
 // json property names
 #define TAG_TYPE			"type"
 #define TAG_SENDER			"sender"
-#define TAG_FILENAME		"file"
+#define TAG_FILE			"file"
 #define TAG_FILELIST		"flist"
 #define TAG_RESPORT			"resp-port"
 
@@ -111,26 +111,38 @@ MessageREQFDATA::~MessageREQFDATA() {
 std::string MessageREQFDATA::jsonify() {
 }
 
-MessageADDFILE::MessageADDFILE(const char* sender_ipv4, std::string sender_nick)
+MessageADDFILE::MessageADDFILE(const char* sender_ipv4,
+		std::string sender_nick, FileInfo file)
 	: Message(ADDFILE, sender_ipv4, sender_nick) {
-
+	added_file = file;
 }
 
 MessageADDFILE::~MessageADDFILE() {
 }
 
 std::string MessageADDFILE::jsonify() {
+	Json::Value root;
+	root[TAG_SENDER] = sender_nick.c_str();
+	root[TAG_TYPE] = type;
+	root[TAG_FILE] = added_file.jsonify();
+	return Message::fast_writer.write(root);
 }
 
-MessageDELFILE::MessageDELFILE(const char* sender_ipv4, std::string sender_nick)
+MessageDELFILE::MessageDELFILE(const char* sender_ipv4,
+		std::string sender_nick, FileInfo file)
 	: Message(DELFILE, sender_ipv4, sender_nick) {
-
+	deleted_file = file;
 }
 
 MessageDELFILE::~MessageDELFILE() {
 }
 
 std::string MessageDELFILE::jsonify() {
+	Json::Value root;
+	root[TAG_SENDER] = sender_nick.c_str();
+	root[TAG_TYPE] = type;
+	root[TAG_FILE] = deleted_file.jsonify();
+	return Message::fast_writer.write(root);
 }
 
 MessageREVFILE::MessageREVFILE(const char* sender_ipv4, std::string sender_nick)
@@ -251,33 +263,35 @@ MessageREQLIST::MessageREQLIST(const char* sender_ipv4, Json::Value& json)
 }
 
 MessageREQFILE::MessageREQFILE(const char* sender_ipv4, Json::Value& json)
-	: Message(REQFILE, sender_ipv4, sender_nick) {
+	: Message(REQFILE, sender_ipv4, json[TAG_SENDER].asString()) {
 }
 
 MessageRESPFILE::MessageRESPFILE(const char* sender_ipv4, Json::Value& json)
-	: Message(RESPFILE, sender_ipv4, sender_nick) {
+	: Message(RESPFILE, sender_ipv4, json[TAG_SENDER].asString()) {
 }
 
 MessageREQFDATA::MessageREQFDATA(const char* sender_ipv4, Json::Value& json)
-	: Message(REQFDATA, sender_ipv4, sender_nick) {
+	: Message(REQFDATA, sender_ipv4, json[TAG_SENDER].asString()) {
 }
 
 MessageADDFILE::MessageADDFILE(const char* sender_ipv4, Json::Value& json)
-	: Message(ADDFILE, sender_ipv4, sender_nick) {
+	: Message(ADDFILE, sender_ipv4, json[TAG_SENDER].asString()) {
+	added_file = FileInfo(json[TAG_FILE]);
 }
 
 MessageDELFILE::MessageDELFILE(const char* sender_ipv4, Json::Value& json)
-	: Message(DELFILE, sender_ipv4, sender_nick) {
+	: Message(DELFILE, sender_ipv4, json[TAG_SENDER].asString()) {
+	deleted_file = FileInfo(json[TAG_FILE]);
 }
 
 MessageREVFILE::MessageREVFILE(const char* sender_ipv4, Json::Value& json)
-	: Message(REVFILE, sender_ipv4, sender_nick) {
+	: Message(REVFILE, sender_ipv4, json[TAG_SENDER].asString()) {
 }
 
 MessageLOCFILE::MessageLOCFILE(const char* sender_ipv4, Json::Value& json)
-	: Message(LOCFILE, sender_ipv4, sender_nick) {
+	: Message(LOCFILE, sender_ipv4, json[TAG_SENDER].asString()) {
 }
 
 MessageUNLOCFILE::MessageUNLOCFILE(const char* sender_ipv4, Json::Value& json)
-	: Message(UNLOCFILE, sender_ipv4, sender_nick) {
+	: Message(UNLOCFILE, sender_ipv4, json[TAG_SENDER].asString()) {
 }
