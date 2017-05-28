@@ -22,17 +22,28 @@
 class TCPlistener {
 private:
 
-	bool listening = false;
+	// temporary file where received data is flushed
+	std::string temp_file;
+
+	bool transfering = false;
+
 	// port of listener socket
 	int port;
+
+	// listener socket fd
+	int tcpsock;
 
 public:
 	TCPlistener();
 	virtual ~TCPlistener();
 
-	void init();
-	int run();
+	void init(unsigned accpt_timeout);
+	int run(unsigned recv_timeout, unsigned long nr_bytes, std::string client_ipv4);
 	void stop();
+
+	int getPort() const {
+		return port;
+	}
 };
 
 // listener of udp datagrams
@@ -101,7 +112,8 @@ public:
 	void broadcastUDP(const char* data, int dest_port);
 	void broadcastUDP(Message* mess, int dest_port);
 	// connect and send tcp data
-	void sendTCP(const char* data, const char* ipv4, int port, unsigned timeout);
+	int fstreamTCP(int fd, unsigned long offset, unsigned long size,
+			const char* ipv4, int dest_port, unsigned send_timeout);
 
 	// open tcp listen socket on any free port
 	void listenTCP(const char* data, const char* ipv4, int* port, unsigned timeout);

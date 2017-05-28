@@ -20,11 +20,15 @@
 #define MAX_DGRAM_LEN			4096 //bytes
 #define UDP_QUEUE_SIZE			2048
 
+//tcp sizes
+#define MAX_CHUNK_SIZE			1024// 1 kB
+
 #define MAX_RESPONER_THREADS	32
 
 #define MAX_NICK_LEN			32 //chars
 
 #define LOG_FILE_NAME			"fShare"
+#define TEMP_FILE_TEMPLATE		"fchunk_XXXXXX"
 
 // protocol message types
 typedef enum {
