@@ -6,11 +6,13 @@
  */
 
 #include <arpa/inet.h>
-#include <asm-generic/socket.h>
 #include <common.h>
+#include <console.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <ifaddrs.h>
 #include <logger.h>
+#include <message.h>
 #include <netinet/in.h>
 #include <network.h>
 #include <sys/socket.h>
@@ -19,7 +21,6 @@
 #include <utilFunctions.h>
 #include <cstring>
 #include <stdexcept>
-#include <console.h>
 
 
 char Network::broadcast_addr[];
@@ -249,267 +250,6 @@ int Network::fstreamTCP(int fd, unsigned long offset, unsigned long size,
 	return 0;
 }
 
-TCPlistener::TCPlistener() {
-}
-
-TCPlistener::~TCPlistener() {
-}
-
-void TCPlistener::init(unsigned accpt_timeout) {
-	if (transfering)
-		throw std::runtime_error( strError("TCP socket is listening now, attepmt to reinitialize existing socket",
-				__FUNCTION__) );
-
-	struct timeval tv = { accpt_timeout , 0};
-
-	struct sockaddr_in addr;
-	memset(&addr, 0, sizeof addr);
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = INADDR_ANY;
-	addr.sin_port = 0;
-
-	if ( ( tcpsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) ) == -1 )
-		throw std::runtime_error(strError("Failed to create TCPlistener socket",
-				__FUNCTION__) );
-
-	if ( setsockopt(tcpsock, SOL_SOCKET, SO_RCVTIMEO,
-			(const char*) &tv, sizeof(struct timeval)) == -1) {
-		close(tcpsock);
-		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
-	}
-
-	if (bind(tcpsock, (struct sockaddr*) &addr, sizeof addr) == -1) {
-		close(tcpsock);
-		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
-	}
-
-	unsigned length = sizeof addr;
-	if ( getsockname(tcpsock, (struct sockaddr*) &addr, &length) == -1 ) {
-		close(tcpsock);
-		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
-	}
-
-	// save port number
-	port = ntohs(addr.sin_port);
-}
-
-int TCPlistener::run(unsigned recv_timeout, unsigned long nr_bytes, std::string client_ipv4) {
-	struct sockaddr_storage their_addr;
-	socklen_t addr_len = sizeof their_addr;
-	unsigned numbytes;
-
-	// wait for one client
-	listen(tcpsock, 1);
-	int readsock = accept(tcpsock, (struct sockaddr*) &their_addr, &addr_len);
-	if (readsock == -1) {
-		logger->warn("TCP: Error when accepting tcp client: {}", strerror(errno));
-		close(tcpsock);
-		return -1;
-	}
-
-	// check if accepted expected client
-	std::string their_ipv4_str(inet_ntoa( ((struct sockaddr_in*)&their_addr)->sin_addr ));
-	if (client_ipv4 != their_ipv4_str) {
-		logger->warn("TCP: Accepted not expected client: exp:{} != {}",
-				client_ipv4, their_ipv4_str);
-		close(tcpsock);
-		close(readsock);
-		return -1;
-	}
-
-	// set recv timeout
-	struct timeval tv = { recv_timeout , 0};
-	if ( setsockopt(readsock, SOL_SOCKET, SO_RCVTIMEO,
-			(const char*) &tv, sizeof(struct timeval)) == -1) {
-		close(tcpsock);
-		close(readsock);
-		return -1;
-	}
-
-	// open temp file to flush received data
-	char tmpname[] = TEMP_FILE_TEMPLATE;
-	int tmpfd = mkstemp(tmpname);
-	if (tmpfd == -1) {
-		logger->warn("TCP: Error creating temp file for data: {}", strerror(errno));
-		close(tcpsock);
-		close(readsock);
-		return -1;
-	}
-
-	// save temp file name
-	temp_file = std::string(tmpname);
-
-	// read data from client
-	int nr_byt_to_read = nr_bytes >= MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : nr_bytes;
-	char* chunk_bytes[MAX_CHUNK_SIZE];
-	transfering = true;
-	while(nr_byt_to_read > 0) {
-		if (!transfering) {
-			logger->warn("TCP: listener stop forced");
-			close(tcpsock);
-			close(readsock);
-			close(tmpfd);
-			return -1;
-		}
-		//clear chunk
-		memset(chunk_bytes, 0, MAX_CHUNK_SIZE);
-		//read single chunk
-		numbytes = recv(readsock, chunk_bytes, nr_byt_to_read, 0);
-		if (numbytes != nr_byt_to_read || !transfering) {
-			logger->error("TCP: recv error: {}, numbytes: {}", strerror(errno), numbytes);
-			transfering = false;
-			close(tcpsock);
-			close(readsock);
-			close(tmpfd);
-			return -1;
-		}
-		// flush chunk bytes to file
-		write(tmpfd, chunk_bytes, nr_byt_to_read);
-		//update nr bytes to receive next
-		nr_bytes -= nr_byt_to_read;
-		nr_byt_to_read = nr_bytes >= MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : nr_bytes;
-	}
-	transfering = false;
-	close(tcpsock);
-	close(readsock);
-	close(tmpfd);
-	logger->info("TCP: listener, received all requested file bytes from {}",
-			their_ipv4_str);
-	return 0;
-}
-
-void TCPlistener::stop() {
-	transfering = false;
-}
-
-UDPlistener::UDPlistener(unsigned qsize) : receivedUDPs(qsize) {
-}
-
-UDPlistener::~UDPlistener() {
-}
-
-void UDPlistener::init(unsigned timeout, int forceport) {
-	if (listening)
-		throw std::runtime_error( strError("UDP socket is listening now, attepmt to reinitialize existing socket",
-				__FUNCTION__) );
-
-	receivedUDPs.clear();
-
-	struct timeval tv;
-	tv.tv_sec = timeout;  /* Secs Timeout */
-	tv.tv_usec = 0;  // Not init'ing this can cause strange errors
-
-	struct sockaddr_in addr;
-	memset(&addr, 0, sizeof addr);
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = INADDR_ANY;
-	addr.sin_port = htons(forceport);
-
-	if ( ( udpsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP) ) == -1 )
-		throw std::runtime_error(strError("Failed to create UDPlistener socket",
-				__FUNCTION__) );
-
-	int err = setsockopt(udpsock, SOL_SOCKET, SO_RCVTIMEO,
-			(const char*) &tv, sizeof(struct timeval));
-	if (err == -1) {
-		close(udpsock);
-		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
-	}
-
-	if (bind(udpsock, (struct sockaddr*) &addr, sizeof addr) == -1) {
-		close(udpsock);
-		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
-	}
-
-	unsigned length = sizeof addr;
-	if ( getsockname(udpsock, (struct sockaddr*) &addr, &length) == -1 ) {
-		close(udpsock);
-		throw std::runtime_error( strError(strerror(errno), __FUNCTION__) );
-	}
-
-	// save port number
-	port = ntohs(addr.sin_port);
-}
-
-Message* UDPlistener::receiveMessage() {
-	// init must be called before
-	run(1);
-	if ( receivedUDPs.notEmpty() ) {
-		Datagram* dgram = receivedUDPs.take();
-		Message* m = parseJSONtoMessage(dgram);
-		return m;
-	}
-	return nullptr;
-}
-
-std::queue<Message*> UDPlistener::receiveMessages() {
-	// init must be called before
-	run();
-	std::queue<Message*> recvd;
-	while ( receivedUDPs.notEmpty() ) {
-		Datagram* dgram = receivedUDPs.take();
-		Message* m = parseJSONtoMessage(dgram);
-		if (m != nullptr)
-			recvd.push(m);
-	}
-	return recvd;
-}
-
-int UDPlistener::run(int exp_dgrams) {
-
-	struct sockaddr_storage their_addr;
-	socklen_t addr_len = sizeof their_addr;
-	int numbytes;
-
-	bool infinite = (exp_dgrams <= 0);
-
-	logger->info("Running UDP listener on port: {}", port);
-	listening = true;
-	while (listening && (infinite || exp_dgrams > 0)) {
-		char buf[MAX_DGRAM_LEN];
-		memset(buf, 0, sizeof buf);
-
-		if ( (numbytes = recvfrom(udpsock,
-								buf,
-								MAX_DGRAM_LEN - 1,
-								0,
-								(struct sockaddr *)&their_addr,
-								&addr_len) ) <= 0) {
-			// break if time passed
-			logger->info("Socket timeout or recvfrom() error");
-			break;
-		} else {
-			struct sockaddr_in* their_addr_in = (struct sockaddr_in *) &their_addr;
-
-			Datagram* dgram = new Datagram( inet_ntoa(their_addr_in->sin_addr), buf, numbytes);
-			// drop datagrams from myself
-			if ( strcmp(dgram->getSender(), Network::getMyIpv4Addr() ) == 0 ) {
-				logger->info("Dropped message from myself: {}", dgram->getSender() );
-				delete dgram;
-				continue;
-			}
-			// save received datagram
-			logger->info("Received datagram from {}: {}", dgram->getSender(),
-					dgram->getBytes() );
-			receivedUDPs.insert( dgram );
-			if (!infinite)
-				exp_dgrams--;
-		}
-	}
-	listening = false;
-	logger->info("Closed UDP listener on port: {}", port);
-	close(udpsock);
-	return 0;
-}
-
-bool UDPlistener::isListening() {
-	return listening;
-}
-
-void UDPlistener::stop() {
-	listening = false;
-}
-
 void Network::listenUDP(unsigned timeout, int exp_dgrams, int forceport) {
 	try {
 		udplisten.init(timeout, forceport);
@@ -525,3 +265,4 @@ void Network::listenUDP(unsigned timeout, int exp_dgrams, int forceport) {
 void listenUDPThread(UDPlistener& udplis, int exp_dgrams) {
 	udplis.run(exp_dgrams);
 }
+

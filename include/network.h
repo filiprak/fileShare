@@ -11,81 +11,9 @@
 #ifndef NETWORK_NETWORK_H_
 #define NETWORK_NETWORK_H_
 
-#include <blockingQueue.h>
-#include <datagram.h>
-#include <message.h>
 #include <netdb.h>
-#include <queue>
+#include <udplistener.h>
 #include <string>
-
-// listener of tcp datagrams
-class TCPlistener {
-private:
-
-	// temporary file where received data is flushed
-	std::string temp_file;
-
-	bool transfering = false;
-
-	// port of listener socket
-	int port;
-
-	// listener socket fd
-	int tcpsock;
-
-public:
-	TCPlistener();
-	virtual ~TCPlistener();
-
-	void init(unsigned accpt_timeout);
-	int run(unsigned recv_timeout, unsigned long nr_bytes, std::string client_ipv4);
-	void stop();
-
-	int getPort() const {
-		return port;
-	}
-};
-
-// listener of udp datagrams
-class UDPlistener {
-private:
-	// pair: key = sender address, value = received bytes
-	BlockingQueue< Datagram* > receivedUDPs;
-	bool listening = false;
-	// port of listener socket
-	int port;
-
-	// listener socket fd
-	int udpsock;
-
-public:
-	UDPlistener(unsigned qsize);
-	virtual ~UDPlistener();
-
-	void init(unsigned timeout, int forceport=0);
-	int run(int exp_dgrams=0);
-	bool isListening();
-	void stop();
-
-	// receive messages functions
-	Message* receiveMessage();
-	std::queue< Message* > receiveMessages();
-
-	int getPort() {
-		return port;
-	}
-
-	BlockingQueue< Datagram* >& getReceivedUdPs() {
-		return receivedUDPs;
-	}
-
-	void clearReceivedUDPs() {
-		while( receivedUDPs.notEmpty() ) {
-			delete receivedUDPs.take();
-		}
-	}
-};
-
 
 
 class Network {
