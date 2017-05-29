@@ -145,8 +145,9 @@ std::string MessageDELFILE::jsonify() {
 	return Message::fast_writer.write(root);
 }
 
-MessageREVFILE::MessageREVFILE(const char* sender_ipv4, std::string sender_nick)
-	: Message(REVFILE, sender_ipv4, sender_nick) {
+MessageREVFILE::MessageREVFILE(const char* sender_ipv4,
+		std::string sender_nick, std::string rev_file)
+	: Message(REVFILE, sender_ipv4, sender_nick), rev_file(rev_file) {
 
 }
 
@@ -154,10 +155,16 @@ MessageREVFILE::~MessageREVFILE() {
 }
 
 std::string MessageREVFILE::jsonify() {
+	Json::Value root;
+	root[TAG_SENDER] = sender_nick.c_str();
+	root[TAG_TYPE] = type;
+	root[TAG_FILE] = rev_file.c_str();
+	return Message::fast_writer.write(root);
 }
 
-MessageLOCFILE::MessageLOCFILE(const char* sender_ipv4, std::string sender_nick)
-	: Message(LOCFILE, sender_ipv4, sender_nick) {
+MessageLOCFILE::MessageLOCFILE(const char* sender_ipv4,
+		std::string sender_nick, std::string lck_file)
+	: Message(LOCFILE, sender_ipv4, sender_nick), lck_file(lck_file) {
 
 }
 
@@ -165,17 +172,27 @@ MessageLOCFILE::~MessageLOCFILE() {
 }
 
 std::string MessageLOCFILE::jsonify() {
+	Json::Value root;
+	root[TAG_SENDER] = sender_nick.c_str();
+	root[TAG_TYPE] = type;
+	root[TAG_FILE] = lck_file.c_str();
+	return Message::fast_writer.write(root);
 }
 
-MessageUNLOCFILE::MessageUNLOCFILE(const char* sender_ipv4,std::string sender_nick)
-	: Message(UNLOCFILE, sender_ipv4, sender_nick) {
-
+MessageUNLOCFILE::MessageUNLOCFILE(const char* sender_ipv4,
+		std::string sender_nick, std::string unlck_file)
+	: Message(UNLOCFILE, sender_ipv4, sender_nick), unlck_file(unlck_file) {
 }
 
 MessageUNLOCFILE::~MessageUNLOCFILE() {
 }
 
 std::string MessageUNLOCFILE::jsonify() {
+	Json::Value root;
+	root[TAG_SENDER] = sender_nick.c_str();
+	root[TAG_TYPE] = type;
+	root[TAG_FILE] = unlck_file.c_str();
+	return Message::fast_writer.write(root);
 }
 
 
@@ -286,12 +303,15 @@ MessageDELFILE::MessageDELFILE(const char* sender_ipv4, Json::Value& json)
 
 MessageREVFILE::MessageREVFILE(const char* sender_ipv4, Json::Value& json)
 	: Message(REVFILE, sender_ipv4, json[TAG_SENDER].asString()) {
+	rev_file = json[TAG_FILE].asString();
 }
 
 MessageLOCFILE::MessageLOCFILE(const char* sender_ipv4, Json::Value& json)
 	: Message(LOCFILE, sender_ipv4, json[TAG_SENDER].asString()) {
+	lck_file = json[TAG_FILE].asString();
 }
 
 MessageUNLOCFILE::MessageUNLOCFILE(const char* sender_ipv4, Json::Value& json)
 	: Message(UNLOCFILE, sender_ipv4, json[TAG_SENDER].asString()) {
+	unlck_file = json[TAG_FILE].asString();
 }

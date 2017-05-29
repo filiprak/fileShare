@@ -169,36 +169,60 @@ public:
 };
 
 class MessageREVFILE: public Message {
+private:
+	std::string rev_file;
+
 public:
 
-	MessageREVFILE(const char* sender_ipv4, std::string sender_nick);
+	MessageREVFILE(const char* sender_ipv4,
+			std::string sender_nick, std::string rev_file);
 	MessageREVFILE(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageREVFILE();
 
 	// generates json format of message
 	virtual std::string jsonify();
+
+	std::string getRevFile() {
+		return rev_file;
+	}
 };
 
 class MessageLOCFILE: public Message {
+private:
+	std::string lck_file;
+
 public:
 
-	MessageLOCFILE(const char* sender_ipv4, std::string sender_nick);
+	MessageLOCFILE(const char* sender_ipv4,
+			std::string sender_nick, std::string lck_file);
 	MessageLOCFILE(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageLOCFILE();
 
 	// generates json format of message
 	virtual std::string jsonify();
+
+	std::string getLckFile() {
+		return lck_file;
+	}
 };
 
 class MessageUNLOCFILE: public Message {
+private:
+	std::string unlck_file;
+
 public:
 
-	MessageUNLOCFILE(const char* sender_ipv4, std::string sender_nick);
+	MessageUNLOCFILE(const char* sender_ipv4,
+			std::string sender_nick, std::string unlck_file);
 	MessageUNLOCFILE(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageUNLOCFILE();
 
 	// generates json format of message
 	virtual std::string jsonify();
+
+	std::string getUnlckFile() {
+		return unlck_file;
+	}
 };
 
 // function creates message object from

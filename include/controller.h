@@ -40,7 +40,7 @@ public:
 };
 
 // broadcasts list request, may throw exceptions
-void broadcastListRequest();
+void sendListRequest();
 
 /* locally triggered operations (by user commands) handled by Controller */
 

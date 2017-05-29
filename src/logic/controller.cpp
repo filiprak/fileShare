@@ -149,10 +149,31 @@ bool greetingThread(const char* nick) {
 
 }
 
-void broadcastListRequest() {
+void sendListRequest() {
+	UI.info("Synchronizing file list... please wait...");
+
+	// check who is alive
 	Network network;
+	UDPlistener& greetLis = network.getUdplisten();
+
+	greetLis.init(1);
+
+	MessageGREETING greet(Network::getMyIpv4Addr(), Network::getMyNick(),
+					greetLis.getPort() );
+
+	auto future = std::async( &UDPlistener::receiveMessage, &greetLis );
+	// broadcast greeting message
+	network.broadcastUDP( &greet, LISTENER_PORT );
+
+	Message* recvd = future.get();
+	// return if did not get any answer
+	if (recvd == nullptr)
+		return;
+
+	// send list request to first host who answers
 	MessageREQLIST reqlist(Network::getMyIpv4Addr(), Network::getMyNick());
-	network.broadcastUDP(&reqlist, LISTENER_PORT);
+	network.sendUDP(&reqlist, recvd->getSenderIpv4().c_str(), LISTENER_PORT);
+	delete recvd;
 }
 
 void showListThread(std::string filter) {
@@ -160,8 +181,7 @@ void showListThread(std::string filter) {
 
 		auto future = std::async( &NetworkFileList::getFileList, &netFileList );
 		//send update request
-		broadcastListRequest();
-		UI.info("Synchronizing file list... please wait...");
+		sendListRequest();
 		//wait for list update
 		std::map< std::string, FileInfo > fmap = future.get();
 
@@ -180,8 +200,7 @@ void addFileThread(std::string filename) {
 	try {
 		Network network;
 		//send update request
-		broadcastListRequest();
-		UI.info("Synchronizing file list... please wait...");
+		sendListRequest();
 		//check if file exists
 		if (!netFileList.hasFile(filename)) {
 			f.setAddTime(getCurrentTimeSeconds());
@@ -218,7 +237,7 @@ void deleteFileThread(std::string filename) {
 		}
 
 	} catch (std::exception& e) {
-		UI.error("Updating list: %s", e.what());
+		UI.error("Deleting file '%s': %s", filename.c_str(), e.what());
 		logger->error("Exception in: {}: {}", __FUNCTION__, e.what());
 	}
 }
@@ -228,13 +247,67 @@ void downloadFileThread(std::string filename) {
 }
 
 void lockFileThread(std::string filename) {
-	UI.warning(__FUNCTION__);
+	try {
+		Network network;
+
+		bool found;
+		FileInfo ftolock = netFileList.getFileInfo(filename, &found);
+		if (found && ftolock.getOwner() == Network::getMyNick()) {
+			MessageLOCFILE msglock(Network::getMyIpv4Addr(),
+						Network::getMyNick(), ftolock.getName());
+			network.broadcastUDP(&msglock, LISTENER_PORT);
+			netFileList.lockFile(filename);
+			UI.info("File '%s' was locked successfully", filename.c_str());
+		} else {
+			UI.error("File '%s' cannot be locked", filename.c_str() );
+		}
+
+	} catch (std::exception& e) {
+		UI.error("Locking file '%s': %s", filename.c_str(), e.what());
+		logger->error("Exception in: {}: {}", __FUNCTION__, e.what());
+	}
 }
 
 void unlockFileThread(std::string filename) {
-	UI.warning(__FUNCTION__);
+	try {
+		Network network;
+
+		bool found;
+		FileInfo ftounlck = netFileList.getFileInfo(filename, &found);
+		if (found && ftounlck.getOwner() == Network::getMyNick()) {
+			MessageUNLOCFILE msgunlck(Network::getMyIpv4Addr(),
+						Network::getMyNick(), ftounlck.getName());
+			network.broadcastUDP(&msgunlck, LISTENER_PORT);
+			netFileList.unlockFile(filename);
+			UI.info("File '%s' was unlocked successfully", filename.c_str());
+		} else {
+			UI.error("File '%s' cannot be unlocked", filename.c_str() );
+		}
+
+	} catch (std::exception& e) {
+		UI.error("Unlocking file '%s': %s", filename.c_str(), e.what());
+		logger->error("Exception in: {}: {}", __FUNCTION__, e.what());
+	}
 }
 
 void revokeFileThread(std::string filename) {
-	UI.warning(__FUNCTION__);
+	try {
+		Network network;
+
+		bool found;
+		FileInfo ftorev = netFileList.getFileInfo(filename, &found);
+		if (found && ftorev.getOwner() == Network::getMyNick()) {
+			MessageREVFILE msgrev(Network::getMyIpv4Addr(),
+						Network::getMyNick(), ftorev.getName());
+			network.broadcastUDP(&msgrev, LISTENER_PORT);
+			netFileList.revokeFile(filename);
+			UI.info("File '%s' was revoked successfully", filename.c_str());
+		} else {
+			UI.error("File '%s' cannot be revoked", filename.c_str() );
+		}
+
+	} catch (std::exception& e) {
+		UI.error("Revoking file '%s': %s", filename.c_str(), e.what());
+		logger->error("Exception in: {}: {}", __FUNCTION__, e.what());
+	}
 }

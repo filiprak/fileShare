@@ -193,12 +193,48 @@ void responseDELFILEThread(MessageDELFILE* mess) {
 }
 
 void responseREVFILEThread(MessageREVFILE* mess) {
+	try {
+		std::string f = mess->getRevFile();
+		bool res = netFileList.revokeFile( f );
+		if (!res)
+			logger->warn("{}: File: '{}' not revoked (as requested) on network-list",
+					__FUNCTION__, f );
+
+	} catch (const std::exception &e) {
+		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+	}
+	logger->flush();
+	delete mess;
 }
 
 void responseLOCFILEThread(MessageLOCFILE* mess) {
+	try {
+		std::string f = mess->getLckFile();
+		bool res = netFileList.lockFile( f );
+		if (!res)
+			logger->warn("{}: File: '{}' not locked (as requested) on network-list",
+					__FUNCTION__, f );
+
+	} catch (const std::exception &e) {
+		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+	}
+	logger->flush();
+	delete mess;
 }
 
 void responseUNLOCFILEThread(MessageUNLOCFILE* mess) {
+	try {
+		std::string f = mess->getUnlckFile();
+		bool res = netFileList.unlockFile( f );
+		if (!res)
+			logger->warn("{}: File: '{}' not unlocked (as requested) on network-list",
+					__FUNCTION__, f );
+
+	} catch (const std::exception &e) {
+		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+	}
+	logger->flush();
+	delete mess;
 }
 
 void responderThread(Responder& resp) {
