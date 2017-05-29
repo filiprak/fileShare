@@ -23,6 +23,7 @@
 #include <exception>
 #include <string>
 #include <console.h>
+#include "utilFunctions.h"
 
 
 std::string usage = "Program usage: command <iface> <nick>\n";
@@ -97,6 +98,8 @@ int main( int argc, char* argv[] ) {
 			MessageREQLIST req(Network::getMyIpv4Addr(), Network::getMyNick());
 			net.broadcastUDP(&req, LISTENER_PORT);
 
+			// make local files directory
+			mkdirectory(LOCAL_FILES_DIRNAME);
 			// run user interface
 			UI.msg("Welcome to fileShare !", "");
 			UI.msg("----------------------------------------------<<<", "");

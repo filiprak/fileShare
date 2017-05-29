@@ -6,8 +6,12 @@
  */
 
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "utilFunctions.h"
-#include "string.h"
+#include <cstring>
+#include <fstream>
 
 std::string strError(std::string cont, std::string prefix) {
 	if (prefix != "")
@@ -33,3 +37,28 @@ int strip(std::string& str, std::vector< std::string >& result,
 	}
 	return result.size();
 }
+
+void cpy(const char* from, const char* to) {
+	std::ifstream  src(from, std::ios::binary);
+	std::ofstream  dst(to,   std::ios::binary);
+	dst << src.rdbuf();
+}
+
+void mkdirectory(const char* dirname) {
+	struct stat st = {0};
+
+	if (stat(dirname, &st) == -1) {
+	    mkdir(dirname, 0700);
+	}
+}
+
+long long fsize(const char* filename) {
+    struct stat stat_buf;
+    int rc = stat(filename, &stat_buf);
+    return rc == 0 ? stat_buf.st_size : -1;
+}
+
+bool fexists(const char* filename) {
+	return access( filename, F_OK ) != -1;
+}
+

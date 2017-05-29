@@ -195,7 +195,16 @@ void showListThread(std::string filter) {
 }
 
 void addFileThread(std::string filename) {
-	FileInfo f(filename, Network::getMyNick(), 344554);
+	mkdirectory(LOCAL_FILES_DIRNAME);
+	std::string path = std::string(LOCAL_FILES_DIRNAME) + "/" + filename;
+
+	long long file_size = fsize(path.c_str());
+	if (file_size == -1) {
+		UI.error("File '%s' should be put to '%s/' directory",
+				filename.c_str(), LOCAL_FILES_DIRNAME);
+		return;
+	}
+	FileInfo f(filename, Network::getMyNick(), file_size);
 
 	try {
 		Network network;
@@ -214,12 +223,14 @@ void addFileThread(std::string filename) {
 			UI.error("File '%s' already exists", filename.c_str() );
 
 	} catch (std::exception& e) {
-		UI.error("Updating list: %s", e.what());
+		UI.error("Adding file: %s", e.what());
 		logger->error("Exception in: {}: {}", __FUNCTION__, e.what());
 	}
 }
 
 void deleteFileThread(std::string filename) {
+	mkdirectory(LOCAL_FILES_DIRNAME);
+	std::string path = std::string(LOCAL_FILES_DIRNAME) + "/" + filename;
 
 	try {
 		Network network;
