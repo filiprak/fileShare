@@ -25,31 +25,36 @@ public:
 	virtual ~LocalFileList() {};
 
 	bool add(std::string filename) {
-		mux.lock();
+		std::unique_lock<std::mutex> lock(mux);
 		if (std::find(local_files.begin(),
 				local_files.end(), filename) != local_files.end())
 			return false;
 		local_files.push_back(filename);
-		mux.unlock();
 		return true;
 	}
 
 	bool remove(std::string filename) {
-		mux.lock();
+		std::unique_lock<std::mutex> lock(mux);
 		std::vector<std::string>::iterator elem;
 		elem = std::find(local_files.begin(), local_files.end(), filename);
 		if (elem == local_files.end())
 			return false;
 		local_files.erase(elem);
-		mux.unlock();
+		return true;
+	}
+
+	bool contains(std::string filename) {
+		std::unique_lock<std::mutex> lock(mux);
+		std::vector<std::string>::iterator elem;
+		elem = std::find(local_files.begin(), local_files.end(), filename);
+		if (elem == local_files.end())
+			return false;
 		return true;
 	}
 
 	std::vector<std::string> getLocalFiles() {
-		mux.lock();
-		std::vector<std::string> list(local_files);
-		mux.unlock();
-		return list;
+		std::unique_lock<std::mutex> lock(mux);
+		return local_files;
 	}
 };
 

@@ -36,6 +36,10 @@ public:
 	int getPort() const {
 		return port;
 	}
+
+	std::string getTempFile() {
+		return temp_file;
+	}
 };
 
 #endif /* NETWORK_TCPLISTENER_H_ */

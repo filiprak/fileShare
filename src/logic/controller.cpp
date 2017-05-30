@@ -19,6 +19,7 @@
 #include "utilFunctions.h"
 #include "networkFileList.h"
 #include "localFileList.h"
+#include "tcplistener.h"
 
 Controller::Controller() {
 }
@@ -283,23 +284,141 @@ void downloadFileThread(std::string filename) {
 
 		if (found) {
 			if (f.getOwner() == Network::getMyNick()) {
-				UI.error("File '%s' is exists", filename.c_str() );
+				UI.error("You can't download your file '%s'", filename.c_str() );
+				return;
+			} else if (f.isBlocked() || f.isRevoked()) {
+				UI.error("File '%s' is blocked or revoked", filename.c_str() );
+					return;
+			} else if (localFileList.contains(f.getName())) {
+				UI.error("File '%s' is already downloaded", filename.c_str() );
+					return;
+			}
+
+			UDPlistener flistener(MESS_QUEUE_SIZE);
+			flistener.init(3);
+			// determine who can share with file
+			MessageREQFILE msgrqf(Network::getMyIpv4Addr(),
+						Network::getMyNick(), f.getName(), flistener.getPort());
+			//listen for responses
+			auto future = std::async( &UDPlistener::receiveMessages, &flistener );
+			// broadcast request message
+			network.broadcastUDP( &msgrqf, LISTENER_PORT );
+			UI.info("Looking for peers to download '%s' file", filename.c_str());
+
+			// get responses
+			std::queue< Message* > recvd = future.get();
+			// filter from messages other than MessageRESPFILE
+			std::queue< Message* > resp_f_que;
+			while(!recvd.empty()) {
+				Message* m = recvd.front();
+				recvd.pop();
+				if (m->getType() == RESPFILE)
+					resp_f_que.push(m);
+				else
+					delete m;
+			}
+
+			if (resp_f_que.empty()) {
+				UI.error("File '%s' is not available at the moment", filename.c_str());
 				return;
 			}
 
-			f.setAddTime(getCurrentTimeSeconds());
-			MessageADDFILE msgadd(Network::getMyIpv4Addr(),
-						Network::getMyNick(), f);
-			network.broadcastUDP(&msgadd, LISTENER_PORT);
-			netFileList.addFile(f);
-			UI.info("File '%s' was downloaded successfully", filename.c_str());
+			// cut file into slices if size grater than 10 chunk sizes
+			unsigned long whole_size = f.getSize();
+			unsigned long fch_size = f.getSize();
+			if (f.getSize() > 10*MAX_CHUNK_SIZE)
+				fch_size = f.getSize() / resp_f_que.size();
+
+			// allocate bool array for results
+			std::vector< std::future<bool> > future_vec;
+			std::vector< bool > fut_values;
+			// array of temp file names
+			std::vector< std::string > temp_fnames;
+
+			unsigned long offset = 0;
+			unsigned long size = fch_size;
+			unsigned long rest_size = whole_size;
+
+			for (int i = 0; i < resp_f_que.size(); ++i) {
+				Message* m = resp_f_que.front();
+				resp_f_que.pop();
+				std::string temp_fname;
+
+				future_vec.push_back( std::async(&downloadChunkThread, offset, size,
+						filename, (MessageRESPFILE*) m, &temp_fname) );
+				temp_fnames.push_back(temp_fname);
+
+				offset += size;
+				rest_size -= size;
+				if (offset >= whole_size) break;
+				size = rest_size >= fch_size ? fch_size : rest_size;
+			}
+
+			UI.info("Downloading '%s' file from %d peer(s)",
+								filename.c_str(), resp_f_que.size());
+
+			bool all_downloaded = true;
+			for (int i = 0; i < resp_f_que.size(); ++i) {
+				fut_values[i] = future_vec[i].get();
+				if (!fut_values[i])
+					all_downloaded = false;
+			}
+			if (all_downloaded) {
+				localFileList.add(filename);
+				UI.info("File '%s' was downloaded successfully", filename.c_str());
+			} else {
+				UI.info("File '%s' download failed", filename.c_str());
+				for (int i = 0; i < temp_fnames.size(); ++i) {
+					//clean file chunk
+					std::remove(temp_fnames[i].c_str());
+				}
+			}
+
+			// clear mess queue
+			while(!resp_f_que.empty()) {
+				Message* m = resp_f_que.front();
+				recvd.pop();
+				delete m;
+			}
 
 		} else
 			UI.error("File '%s' does not exists", filename.c_str() );
 
 	} catch (std::exception& e) {
-		UI.error("Downloading file: %s", e.what());
+		UI.error("Downloading '%s' file: %s", e.what(), filename.c_str());
 		logger->error("Exception in: {}: {}", __FUNCTION__, e.what());
+	}
+
+}
+
+bool downloadChunkThread(unsigned long offset, unsigned long size, std::string filename,
+		MessageRESPFILE* m, std::string* file_ch_name) {
+	try {
+		TCPlistener tcplis;
+		tcplis.init(2);
+		int res;
+
+		for (int tries = 0; tries < CHUNK_DOWNLD_TRIES; ++tries) {
+			MessageREQFDATA reqdata(Network::getMyIpv4Addr(),
+					Network::getMyNick(),
+					filename,
+					tcplis.getPort(),
+					offset,
+					size);
+			res = tcplis.run(3, size, m->getSenderIpv4());
+			if (res == 0) break;
+		}
+		*file_ch_name = tcplis.getTempFile();
+		// clean if didnt succeded
+		if (res ==-1)
+			std::remove(tcplis.getTempFile().c_str());
+
+		return (res == 0);
+
+	} catch (std::exception& e) {
+		UI.error("Downloading file '%s' chunk: %s", e.what(), filename.c_str());
+		logger->error("Exception in: {}: {}", __FUNCTION__, e.what());
+		return false;
 	}
 
 }

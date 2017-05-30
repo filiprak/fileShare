@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <string>
 #include <networkFileList.h>
+#include <localFileList.h>
 #include <console.h>
 
 Responder::Responder(BlockingQueue< Message* >& q) : messq(q) {
@@ -121,12 +122,56 @@ void responseGREETINGThread(MessageGREETING* mess) {
 }
 
 void responseREQFILEThread(MessageREQFILE* mess) {
-	sleep(1);
+	logger->info("Responding on REQFILE message from {}({})", mess->getSenderIpv4(),
+			mess->getNick() );
+	try {
+		Network network;
+		// response if have file locally
+		if (localFileList.contains(mess->getRequestedFile())) {
+			MessageRESPFILE response(Network::getMyIpv4Addr(),
+					Network::getMyNick(), mess->getRequestedFile());
+			network.sendUDP( &response, mess->getSenderIpv4().c_str(),
+					mess->getRespPort() );
+		}
+
+	} catch (const std::exception &e) {
+		UI.error("response REQFILE: %s", e.what());
+		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+	}
 	delete mess;
 }
 
 void responseREQFDATAThread(MessageREQFDATA* mess) {
-	sleep(2);
+	logger->info("Responding on REQFDATA message from {}({})", mess->getSenderIpv4(),
+				mess->getNick() );
+	int fd;
+	Network network;
+
+	try {
+		// response if have file locally
+		if (localFileList.contains(mess->getRequestedFile())) {
+			std::string path = std::string(LOCAL_FILES_DIRNAME) +
+					"/" + mess->getRequestedFile();
+
+			fd = open(path.c_str(), O_RDONLY);
+			int res = network.fstreamTCP(fd,
+					mess->getOffset(),
+					mess->getSize(),
+					mess->getSenderIpv4().c_str(),
+					mess->getWaitTcpPort(),
+					TCP_SEND_TIMEOUT);
+			close(fd);
+			if (res == -1)
+				logger->error("Failed to send file '{}' data", mess->getRequestedFile());
+			else
+				logger->info("Successfully sent file '{}' data", mess->getRequestedFile());
+		}
+
+	} catch (const std::exception &e) {
+		close(fd);
+		UI.error("response REQFDATA: %s", e.what());
+		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
+	}
 	delete mess;
 }
 
@@ -138,6 +183,7 @@ void responseREQLISTThread(MessageREQLIST* mess) {
 		Json::Value jlist = netFileList.jsonify();
 		MessageRESPLIST response(Network::getMyIpv4Addr(), Network::getMyNick(), jlist);
 		network.broadcastUDP(&response, LISTENER_PORT);
+
 	} catch (const std::exception &e) {
 		UI.error("response REQLIST: %s", e.what());
 		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );

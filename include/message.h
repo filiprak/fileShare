@@ -98,36 +98,83 @@ public:
 };
 
 class MessageREQFILE: public Message {
+private:
+	std::string requested_file;
+	int resp_port;
+
 public:
 
-	MessageREQFILE(const char* sender_ipv4, std::string sender_nick);
+	MessageREQFILE(const char* sender_ipv4, std::string sender_nick,
+			std::string filename, int resp_port);
 	MessageREQFILE(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageREQFILE();
 
 	// generates json format of message
 	virtual std::string jsonify();
+
+	std::string getRequestedFile() {
+		return requested_file;
+	}
+
+	int getRespPort() {
+		return resp_port;
+	}
 };
 
 class MessageRESPFILE: public Message {
+private:
+	std::string have_file;
+
 public:
 
-	MessageRESPFILE(const char* sender_ipv4, std::string sender_nick);
+	MessageRESPFILE(const char* sender_ipv4, std::string sender_nick,
+			std::string have_file);
 	MessageRESPFILE(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageRESPFILE();
 
 	// generates json format of message
 	virtual std::string jsonify();
+
+	std::string getHaveFile() {
+		return have_file;
+	}
 };
 
 class MessageREQFDATA: public Message {
+private:
+	std::string requested_file;
+	unsigned long offset, size;
+	int wait_tcp_port;
+
 public:
 
-	MessageREQFDATA(const char* sender_ipv4, std::string sender_nick);
+	MessageREQFDATA(const char* sender_ipv4,
+			std::string sender_nick,
+			std::string req_file,
+			int wait_tcp_port,
+			unsigned long offset,
+			unsigned long size);
 	MessageREQFDATA(const char* sender_ipv4, Json::Value& json);
 	virtual ~MessageREQFDATA();
 
 	// generates json format of message
 	virtual std::string jsonify();
+
+	unsigned long getOffset() {
+		return offset;
+	}
+
+	std::string getRequestedFile() {
+		return requested_file;
+	}
+
+	unsigned long getSize() {
+		return size;
+	}
+
+	int getWaitTcpPort() {
+		return wait_tcp_port;
+	}
 };
 
 class MessageADDFILE: public Message {

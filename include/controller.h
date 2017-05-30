@@ -13,6 +13,7 @@
 
 #include <vector>
 #include <thread>
+#include <message.h>
 
 #define COMMAND_ADD_FILE		"add"
 #define COMMAND_DEL_FILE		"del"
@@ -59,6 +60,9 @@ void addFileThread(std::string filaname);
 
 // download file thread
 void downloadFileThread(std::string filaname);
+// download single file chunk
+bool downloadChunkThread(unsigned long offset, unsigned long size, std::string filename,
+		MessageRESPFILE* m, std::string* file_ch_name);
 
 // lock file thread
 void lockFileThread(std::string filaname);
