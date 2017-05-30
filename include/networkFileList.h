@@ -136,6 +136,11 @@ public:
 		std::unique_lock < std::mutex > lock(_accessMux);
 		return fileList;
 	}
+
+	std::map<std::string, FileInfo> getFileList_nowait() {
+		std::unique_lock < std::mutex > lock(_accessMux);
+		return fileList;
+	}
 };
 
 // network file list

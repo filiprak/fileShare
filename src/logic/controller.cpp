@@ -18,6 +18,7 @@
 #include <console.h>
 #include "utilFunctions.h"
 #include "networkFileList.h"
+#include "localFileList.h"
 
 Controller::Controller() {
 }
@@ -46,7 +47,13 @@ void Controller::runCommand(std::string command) {
 		std::string filter = "";
 		if (nrargs > 1)
 			filter = parsed[1];
-		threads.push_back( std::thread(showListThread, filter) );
+		threads.push_back( std::thread(showNetworkListThread, filter) );
+
+	} else if (parsed[0] == COMMAND_SHOW_LOC_LIST) {
+		std::string filter = "";
+		if (nrargs > 1)
+			filter = parsed[1];
+		threads.push_back( std::thread(showLocalListThread, filter) );
 
 	} else if (parsed[0] == COMMAND_ADD_FILE) {
 		if (nrargs < 2) {
@@ -176,7 +183,7 @@ void sendListRequest() {
 	delete recvd;
 }
 
-void showListThread(std::string filter) {
+void showNetworkListThread(std::string filter) {
 	try {
 
 		auto future = std::async( &NetworkFileList::getFileList, &netFileList );
@@ -192,6 +199,11 @@ void showListThread(std::string filter) {
 		UI.error("Updating list: %s", e.what());
 		logger->error("Exception in: {}: {}", __FUNCTION__, e.what());
 	}
+}
+
+void showLocalListThread(std::string filter) {
+	std::string list = locFileLtoString(filter);
+	UI.msg("Files you have locally:\n", "%s", list.c_str());
 }
 
 void addFileThread(std::string filename) {
@@ -216,7 +228,10 @@ void addFileThread(std::string filename) {
 			MessageADDFILE msgadd(Network::getMyIpv4Addr(),
 						Network::getMyNick(), f);
 			network.broadcastUDP(&msgadd, LISTENER_PORT);
+
 			netFileList.addFile(f);
+			localFileList.add(filename);
+
 			UI.info("File '%s' was added successfully", filename.c_str());
 
 		} else
@@ -241,7 +256,10 @@ void deleteFileThread(std::string filename) {
 			MessageDELFILE msgdel(Network::getMyIpv4Addr(),
 						Network::getMyNick(), ftodel);
 			network.broadcastUDP(&msgdel, LISTENER_PORT);
+
 			netFileList.deleteFile(filename);
+			localFileList.remove(filename);
+
 			UI.info("File '%s' was deleted successfully", filename.c_str());
 		} else {
 			UI.error("File '%s' cannot be deleted", filename.c_str() );
@@ -254,7 +272,36 @@ void deleteFileThread(std::string filename) {
 }
 
 void downloadFileThread(std::string filename) {
-	UI.warning(__FUNCTION__);
+
+	try {
+		Network network;
+		//send update request
+		sendListRequest();
+		//check if file exists
+		bool found;
+		FileInfo f = netFileList.getFileInfo(filename, &found);
+
+		if (found) {
+			if (f.getOwner() == Network::getMyNick()) {
+				UI.error("File '%s' is exists", filename.c_str() );
+				return;
+			}
+
+			f.setAddTime(getCurrentTimeSeconds());
+			MessageADDFILE msgadd(Network::getMyIpv4Addr(),
+						Network::getMyNick(), f);
+			network.broadcastUDP(&msgadd, LISTENER_PORT);
+			netFileList.addFile(f);
+			UI.info("File '%s' was downloaded successfully", filename.c_str());
+
+		} else
+			UI.error("File '%s' does not exists", filename.c_str() );
+
+	} catch (std::exception& e) {
+		UI.error("Downloading file: %s", e.what());
+		logger->error("Exception in: {}: {}", __FUNCTION__, e.what());
+	}
+
 }
 
 void lockFileThread(std::string filename) {

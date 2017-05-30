@@ -21,6 +21,7 @@
 #define COMMAND_REV_FILE		"rev"
 #define COMMAND_GET_FILE		"get"
 #define COMMAND_SHOW_LIST		"ls"
+#define COMMAND_SHOW_LOC_LIST	"lls"
 #define COMMAND_EXIT			"q"
 
 
@@ -47,8 +48,11 @@ void sendListRequest();
 // greeting thread
 bool greetingThread(const char* nick);
 
-// show all files list
-void showListThread(std::string filter);
+// show all files in network list
+void showNetworkListThread(std::string filter);
+
+// show all files locally available
+void showLocalListThread(std::string filter);
 
 // add file thread
 void addFileThread(std::string filaname);
