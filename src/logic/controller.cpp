@@ -360,6 +360,7 @@ void downloadFileThread(std::string filename) {
 				rest_size -= size;
 				if (offset >= whole_size) break;
 				size = rest_size >= fch_size ? fch_size : rest_size;
+				if (rest_size - 1 == size) size = rest_size;
 			}
 
 			UI.info("Downloading '%s' file from %d peer(s)",
