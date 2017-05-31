@@ -309,7 +309,6 @@ void downloadFileThread(std::string filename) {
 
 			// get responses
 			std::queue< Message* > recvd = future.get();
-			UI.info("Got %d responses", recvd.size());
 			// filter from messages other than MessageRESPFILE
 			std::vector< MessageRESPFILE* > filt_mess_vect;
 			while(!recvd.empty()) {
@@ -340,19 +339,22 @@ void downloadFileThread(std::string filename) {
 			std::vector< std::future<bool> > future_vec;
 			std::vector< bool > fut_values;
 			// array of temp file names
+			std::vector< TCPlistener > tcplis;
 			std::vector< std::string > temp_fnames;
 
 			unsigned long offset = 0;
 			unsigned long size = fch_size;
 			unsigned long rest_size = whole_size;
 
+			// create tcp listeners
+			for (int i = 0; i < filt_mess_vect.size(); ++i)
+				tcplis.push_back(TCPlistener());
+
 			for (int i = 0; i < filt_mess_vect.size(); ++i) {
 				MessageRESPFILE* m = filt_mess_vect[i];
-				std::string temp_fname;
 
 				future_vec.push_back( std::async(downloadChunkThread, offset, size,
-						filename, m, &temp_fname) );
-				temp_fnames.push_back(temp_fname);
+						filename, m, std::ref(tcplis[i])) );
 
 				offset += size;
 				rest_size -= size;
@@ -373,6 +375,7 @@ void downloadFileThread(std::string filename) {
 					if (!res) {
 						all_downloaded = false;
 					}
+					temp_fnames.push_back(tcplis[i].getTempFile());
 				}
 			else {
 				all_downloaded = false;
@@ -382,14 +385,23 @@ void downloadFileThread(std::string filename) {
 			if (all_downloaded) {
 				localFileList.add(filename);
 				UI.info("File '%s' was downloaded successfully", filename.c_str());
-				// merge files
+				// merge temp files
+				for (int i = 0; i < temp_fnames.size(); ++i) {
+					UI.info("Merging: '%s' chunk of file '%s'",
+							temp_fnames[i].c_str(), filename.c_str());
+				}
+				std::string out_path = local_dirname + "/" + filename;
+				if(!mergeChunks(temp_fnames, out_path)) {
+					UI.error("While merging chunks of file '%s'", out_path.c_str());
+				}
+
 			} else {
 				UI.error("File '%s' download failed", filename.c_str());
-				for (int i = 0; i < temp_fnames.size(); ++i) {
-					//clean file chunk
-					std::remove(temp_fnames[i].c_str());
-				}
 			}
+
+			// clean chunks
+			for (int i = 0; i < temp_fnames.size(); ++i)
+				std::remove(temp_fnames[i].c_str());
 
 			// clear mess vector
 			for (int i = 0; i < filt_mess_vect.size(); ++i)
@@ -407,9 +419,9 @@ void downloadFileThread(std::string filename) {
 }
 
 bool downloadChunkThread(unsigned long offset, unsigned long size, std::string filename,
-		MessageRESPFILE* m, std::string* file_ch_name) {
+		MessageRESPFILE* m, TCPlistener& tcplis) {
 	try {
-		Network net;TCPlistener tcplis;
+		Network net;
 		int res = -1;
 		logger->info("Start downloading chunk of file: '{}'<<<<<", filename);
 		for (int tries = 0; tries < CHUNK_DOWNLD_TRIES; ++tries) {
@@ -429,11 +441,10 @@ bool downloadChunkThread(unsigned long offset, unsigned long size, std::string f
 			if (res == 0) break;
 			logger->info("Try nr: {} downloading chunk of file: '{}'<<<<<", tries+1, filename);
 		}
-		*file_ch_name = tcplis.getTempFile();
 		logger->info("Downloading file chunk: '{}' resulted:{}", tcplis.getTempFile(), res);
 
 		// clean if didnt succeded
-		if (res ==-1)
+		if (res == -1)
 			std::remove(tcplis.getTempFile().c_str());
 
 		return (res == 0);

@@ -234,6 +234,10 @@ void responseDELFILEThread(MessageDELFILE* mess) {
 	try {
 		FileInfo f = mess->getDeletedFile();
 		bool res = netFileList.deleteFile( f.getName() );
+		localFileList.remove(f.getName());
+		std::string path = local_dirname + "/" + f.getName();
+		std::remove(path.c_str());
+
 		if (!res)
 			logger->warn("{}: File: {} not deleted from network-list",
 					__FUNCTION__, f.jsonify().toStyledString() );

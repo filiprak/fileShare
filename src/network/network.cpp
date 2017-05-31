@@ -221,17 +221,10 @@ int Network::fstreamTCP(int fd, unsigned long offset, unsigned long size,
 	// stream file bytes
 	unsigned long nr_byt_to_send = size >= MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : size;
 	char* chunk_bytes[MAX_CHUNK_SIZE];
-	// move file position about offset bytes
-	if (lseek(fd, offset, SEEK_SET) == -1) {
-		logger->warn("{}: lseek() failed, errno: {}",
-						__FUNCTION__, strerror(errno));
-		close(tcpsock);
-		return -1;
-	}
 
 	while(nr_byt_to_send > 0) {
 		memset(chunk_bytes, 0, MAX_CHUNK_SIZE);
-		if (read(fd, chunk_bytes, nr_byt_to_send) != nr_byt_to_send) {
+		if (pread(fd, chunk_bytes, nr_byt_to_send, offset) != nr_byt_to_send) {
 			logger->warn("{}: read() failed, errno msg: {}", __FUNCTION__, strerror(errno));
 			close(tcpsock);
 			return -1;

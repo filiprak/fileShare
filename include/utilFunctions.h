@@ -21,5 +21,6 @@ int strip(std::string& str, std::vector< std::string >& result,
 void mkdirectory(const char* dirname);
 long long fsize(const char* filename);
 bool fexists(const char* filename);
+bool mergeChunks(std::vector<std::string> in, std::string out);
 
 #endif /* UTILS_UTILFUNCTIONS_H_ */

@@ -72,6 +72,7 @@ int TCPlistener::run(unsigned recv_timeout, unsigned long nr_bytes, std::string 
 	// wait for one client
 	listen(tcpsock, 1);
 	int readsock = accept(tcpsock, (struct sockaddr*) &their_addr, &addr_len);
+	logger->info("TCP: Waiting for incoming connection on port: {}", port);
 	if (readsock == -1) {
 		logger->warn("TCP: Error when accepting tcp client: {}", strerror(errno));
 		close(tcpsock);
@@ -127,16 +128,25 @@ int TCPlistener::run(unsigned recv_timeout, unsigned long nr_bytes, std::string 
 		memset(chunk_bytes, 0, MAX_CHUNK_SIZE);
 		//read single chunk
 		numbytes = recv(readsock, chunk_bytes, nr_byt_to_read, 0);
-		if (numbytes != nr_byt_to_read || !transfering) {
-			logger->error("TCP: recv error: {}, numbytes: {}", strerror(errno), numbytes);
-			transfering = false;
-			close(tcpsock);
-			close(readsock);
-			close(tmpfd);
-			return -1;
-		}
 		// flush chunk bytes to file
-		write(tmpfd, chunk_bytes, nr_byt_to_read);
+		write(tmpfd, chunk_bytes, numbytes);
+
+		// check if all bytes was received
+		int rest_data = nr_byt_to_read - numbytes;
+		while (rest_data > 0) {
+			memset(chunk_bytes, 0, MAX_CHUNK_SIZE);
+			numbytes = recv(readsock, chunk_bytes, rest_data, 0);
+			if (numbytes < 0 || !transfering) {
+				logger->error("TCP: recv error: {}, numbytes: {}", strerror(errno), numbytes);
+				close(tcpsock);
+				close(readsock);
+				close(tmpfd);
+				return -1;
+			}
+			write(tmpfd, chunk_bytes, numbytes);
+			rest_data -= numbytes;
+		}
+
 		//update nr bytes to receive next
 		nr_bytes -= nr_byt_to_read;
 		nr_byt_to_read = nr_bytes >= MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : nr_bytes;

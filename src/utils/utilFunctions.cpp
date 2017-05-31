@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include "utilFunctions.h"
 #include <cstring>
 #include <fstream>
@@ -60,5 +61,37 @@ long long fsize(const char* filename) {
 
 bool fexists(const char* filename) {
 	return access( filename, F_OK ) != -1;
+}
+
+bool mergeChunks(std::vector<std::string> in, std::string out) {
+#define CP_BUF_SIZE 	4096
+
+	int outfd = open(out.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (outfd < 0) return false;
+
+	char buf[CP_BUF_SIZE];
+	memset(buf, 0, CP_BUF_SIZE);
+
+	for (int i = 0; i < in.size(); ++i) {
+		int chunkfd = open(in[i].c_str(), O_RDONLY);
+		if (chunkfd < 0) return false;
+
+		int numbytes = read(chunkfd, buf, CP_BUF_SIZE);
+		while(numbytes > 0) {
+			write(outfd, buf, numbytes);
+			memset(buf, 0, CP_BUF_SIZE);
+			numbytes = read(chunkfd, buf, CP_BUF_SIZE);
+		}
+		close(chunkfd);
+
+		// reading error
+		if (numbytes < 0) {
+			close(outfd);
+			return false;
+		}
+	}
+
+	close(outfd);
+	return true;
 }
 
