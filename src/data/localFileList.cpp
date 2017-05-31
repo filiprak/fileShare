@@ -14,6 +14,7 @@
 // local file list: list of
 // files currently available on the host
 LocalFileList localFileList;
+std::string local_dirname;
 
 #define MAX_LINE_WIDTH	128
 #define FILELIST_FORMAT "%-20s%-20s%-20lu%-8d%-8d%-15f\n"

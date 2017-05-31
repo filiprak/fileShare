@@ -18,6 +18,7 @@
 #include <cstring>
 #include <stdexcept>
 #include <common.h>
+#include "localFileList.h"
 
 TCPlistener::TCPlistener() : port(-1), tcpsock(-1) {
 }
@@ -97,7 +98,8 @@ int TCPlistener::run(unsigned recv_timeout, unsigned long nr_bytes, std::string 
 	}
 
 	// open temp file to flush received data
-	char tmpname[] = TEMP_FILE_TEMPLATE;
+	std::string temppath = local_dirname + "/" + std::string(TEMP_FILE_TEMPLATE);
+	char* tmpname = (char*) temppath.c_str();
 	int tmpfd = mkstemp(tmpname);
 	if (tmpfd == -1) {
 		logger->warn("TCP: Error creating temp file for data: {}", strerror(errno));

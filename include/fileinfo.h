@@ -68,11 +68,11 @@ public:
 		add_time = addTime;
 	}
 
-	const std::string& getName() const {
+	const std::string getName() const {
 		return name;
 	}
 
-	const std::string& getOwner() const {
+	const std::string getOwner() const {
 		return owner;
 	}
 

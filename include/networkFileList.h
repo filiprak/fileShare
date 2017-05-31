@@ -17,6 +17,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <chrono>
+#include <utility>
 #include "logger.h"
 
 #define WAIT_FOR_UPDATE		2//seconds
@@ -107,14 +108,12 @@ public:
 		return false;
 	}
 
-	FileInfo getFileInfo(std::string filename, bool* found) {
+	 std::pair<bool, FileInfo> getFileInfo(std::string filename) {
 		std::unique_lock < std::mutex > lock(_accessMux);
 		if ( fileList.count(filename) < 1 ) {
-			*found = false;
-			return FileInfo();
+			return std::pair<bool, FileInfo>(false, FileInfo());
 		}
-		*found = true;
-		return fileList[filename];
+		return std::pair<bool, FileInfo>(true, fileList[filename]);
 	}
 
 	Json::Value jsonify() {

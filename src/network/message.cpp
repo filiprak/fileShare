@@ -346,6 +346,7 @@ MessageREQLIST::MessageREQLIST(const char* sender_ipv4, Json::Value& json)
 
 MessageREQFILE::MessageREQFILE(const char* sender_ipv4, Json::Value& json)
 	: Message(REQFILE, sender_ipv4, json[TAG_SENDER].asString()) {
+	requested_file = json[TAG_FILE].asString();
 	resp_port = json[TAG_RESPORT].asInt();
 }
 

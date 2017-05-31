@@ -24,6 +24,7 @@
 #include <string>
 #include <console.h>
 #include "utilFunctions.h"
+#include "localFileList.h"
 
 
 std::string usage = "Program usage: command <iface> <nick>\n";
@@ -50,6 +51,10 @@ int main( int argc, char* argv[] ) {
 	}
 
 	initLogger(argv[2]);
+	//init local directory
+	local_dirname = std::string(LOCAL_FILES_DIRNAME) + "." + std::string(argv[2]);
+	mkdirectory(local_dirname.c_str());
+
 	logger->warn("Starting fileShare program..." );
 
 	BlockingQueue< Message* > messageQueue(MESS_QUEUE_SIZE, false);
@@ -98,8 +103,6 @@ int main( int argc, char* argv[] ) {
 			MessageREQLIST req(Network::getMyIpv4Addr(), Network::getMyNick());
 			net.broadcastUDP(&req, LISTENER_PORT);
 
-			// make local files directory
-			mkdirectory(LOCAL_FILES_DIRNAME);
 			// run user interface
 			UI.msg("Welcome to fileShare !", "");
 			UI.msg("----------------------------------------------<<<", "");

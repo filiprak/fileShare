@@ -14,6 +14,7 @@
 #include <vector>
 #include <algorithm>
 #include <mutex>
+#include <string>
 
 class LocalFileList {
 private:
@@ -59,6 +60,7 @@ public:
 };
 
 extern LocalFileList localFileList;
+extern std::string local_dirname;
 
 // convert local list to string format
 std::string locFileLtoString(std::string& filter);

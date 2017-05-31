@@ -24,9 +24,9 @@
 #define MAX_CHUNK_SIZE			1024// 1 kB
 #define CHUNK_DOWNLD_TRIES		3
 
-#define TCP_SEND_TIMEOUT		3
-#define TCP_RECV_TIMEOUT		3
-#define TCP_ACCEPT_TIMEOUT		3
+#define TCP_SEND_TIMEOUT		10 //seconds
+#define TCP_RECV_TIMEOUT		10 //seconds
+#define TCP_ACCEPT_TIMEOUT		10 //seconds
 
 
 #define MAX_RESPONER_THREADS	32

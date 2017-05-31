@@ -138,6 +138,7 @@ void responseREQFILEThread(MessageREQFILE* mess) {
 		UI.error("response REQFILE: %s", e.what());
 		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
 	}
+	logger->flush();
 	delete mess;
 }
 
@@ -150,21 +151,26 @@ void responseREQFDATAThread(MessageREQFDATA* mess) {
 	try {
 		// response if have file locally
 		if (localFileList.contains(mess->getRequestedFile())) {
-			std::string path = std::string(LOCAL_FILES_DIRNAME) +
+			std::string path = local_dirname +
 					"/" + mess->getRequestedFile();
 
 			fd = open(path.c_str(), O_RDONLY);
-			int res = network.fstreamTCP(fd,
-					mess->getOffset(),
-					mess->getSize(),
-					mess->getSenderIpv4().c_str(),
-					mess->getWaitTcpPort(),
-					TCP_SEND_TIMEOUT);
-			close(fd);
-			if (res == -1)
-				logger->error("Failed to send file '{}' data", mess->getRequestedFile());
-			else
-				logger->info("Successfully sent file '{}' data", mess->getRequestedFile());
+			if (fd == -1) {
+				logger->error("Failed open file '{}' data", mess->getRequestedFile());
+			} else { // stream file through tcp
+				int res = network.fstreamTCP(fd,
+						mess->getOffset(),
+						mess->getSize(),
+						mess->getSenderIpv4().c_str(),
+						mess->getWaitTcpPort(),
+						TCP_SEND_TIMEOUT);
+				close(fd);
+				if (res == -1)
+					logger->error("Failed to send file '{}' data", mess->getRequestedFile());
+				else
+					logger->info("Successfully sent file '{}' data", mess->getRequestedFile());
+			}
+			logger->flush();
 		}
 
 	} catch (const std::exception &e) {
@@ -172,6 +178,7 @@ void responseREQFDATAThread(MessageREQFDATA* mess) {
 		UI.error("response REQFDATA: %s", e.what());
 		logger->error( "Exception in: '{}': {}", __FUNCTION__, e.what() );
 	}
+	logger->flush();
 	delete mess;
 }
 
