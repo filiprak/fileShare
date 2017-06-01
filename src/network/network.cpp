@@ -235,6 +235,7 @@ int Network::fstreamTCP(int fd, unsigned long offset, unsigned long size,
 			return -1;
 		}
 
+		offset += nr_byt_to_send;
 		size -= nr_byt_to_send;
 		nr_byt_to_send = size >= MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : size;
 	}

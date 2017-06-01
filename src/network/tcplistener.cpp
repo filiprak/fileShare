@@ -114,7 +114,7 @@ int TCPlistener::run(unsigned recv_timeout, unsigned long nr_bytes, std::string 
 
 	// read data from client
 	int nr_byt_to_read = nr_bytes >= MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : nr_bytes;
-	char* chunk_bytes[MAX_CHUNK_SIZE];
+	char buffer[MAX_CHUNK_SIZE];
 	transfering = true;
 	while(nr_byt_to_read > 0) {
 		if (!transfering) {
@@ -124,18 +124,12 @@ int TCPlistener::run(unsigned recv_timeout, unsigned long nr_bytes, std::string 
 			close(tmpfd);
 			return -1;
 		}
-		//clear chunk
-		memset(chunk_bytes, 0, MAX_CHUNK_SIZE);
-		//read single chunk
-		numbytes = recv(readsock, chunk_bytes, nr_byt_to_read, 0);
-		// flush chunk bytes to file
-		write(tmpfd, chunk_bytes, numbytes);
 
 		// check if all bytes was received
-		int rest_data = nr_byt_to_read - numbytes;
-		while (rest_data > 0) {
-			memset(chunk_bytes, 0, MAX_CHUNK_SIZE);
-			numbytes = recv(readsock, chunk_bytes, rest_data, 0);
+		int rest_data = nr_byt_to_read;
+		do {
+			memset(buffer, 0, MAX_CHUNK_SIZE);
+			numbytes = recv(readsock, buffer, rest_data, 0);
 			if (numbytes < 0 || !transfering) {
 				logger->error("TCP: recv error: {}, numbytes: {}", strerror(errno), numbytes);
 				close(tcpsock);
@@ -143,9 +137,9 @@ int TCPlistener::run(unsigned recv_timeout, unsigned long nr_bytes, std::string 
 				close(tmpfd);
 				return -1;
 			}
-			write(tmpfd, chunk_bytes, numbytes);
+			write(tmpfd, buffer, numbytes);
 			rest_data -= numbytes;
-		}
+		} while (rest_data > 0);
 
 		//update nr bytes to receive next
 		nr_bytes -= nr_byt_to_read;
