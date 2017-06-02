@@ -214,7 +214,7 @@ void addFileThread(std::string filename) {
 	long long file_size = fsize(path.c_str());
 	if (file_size == -1) {
 		UI.error("File '%s' should be put to '%s/' directory",
-				filename.c_str(), LOCAL_FILES_DIRNAME);
+				filename.c_str(), local_dirname.c_str());
 		return;
 	}
 	FileInfo f(filename, Network::getMyNick(), file_size);

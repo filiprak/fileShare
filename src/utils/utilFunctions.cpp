@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <pwd.h>
 #include <fcntl.h>
 #include "utilFunctions.h"
 #include <cstring>
@@ -45,12 +46,14 @@ void cpy(const char* from, const char* to) {
 	dst << src.rdbuf();
 }
 
-void mkdirectory(const char* dirname) {
+bool mkdirectory(const char* dirname) {
 	struct stat st = {0};
+	bool res = true;
 
 	if (stat(dirname, &st) == -1) {
-	    mkdir(dirname, 0700);
+	    res = (mkdir(dirname, 0644) == 0);
 	}
+	return res;
 }
 
 long long fsize(const char* filename) {
@@ -93,5 +96,14 @@ bool mergeChunks(std::vector<std::string> in, std::string out) {
 
 	close(outfd);
 	return true;
+}
+
+const char *getUserName() {
+	uid_t uid = geteuid();
+	struct passwd *pw = getpwuid(uid);
+	if (pw) {
+		return pw->pw_name;
+	}
+	return nullptr;
 }
 

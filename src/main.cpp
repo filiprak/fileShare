@@ -23,12 +23,11 @@
 #include <exception>
 #include <string>
 #include <console.h>
-#include <dirent.h>
 #include "utilFunctions.h"
 #include "localFileList.h"
 
 
-std::string usage = "Program usage: command <iface> <nick>\n";
+std::string usage = "Program usage: command <iface> <nick>\n\0";
 
 void initLogger(char* nick) {
 	// init logger
@@ -47,26 +46,15 @@ void initLogger(char* nick) {
 void initLocalDirectory(char* nick)
 {
 	// assign local directory name
-	local_dirname = "/home/" + std::string(getlogin()) + "/" + 
+	local_dirname = "/home/" + std::string(getUserName()) + "/" +
 		std::string(LOCAL_FILES_DIRNAME) + "." + std::string(nick);
 
 	// for testing purposes --> assign local file directory in shared folder
 	//local_dirname = std::string(LOCAL_FILES_DIRNAME_TESTING) + "." + std::string(nick);
 
 	// try to open local files directory to check if it exists --> if not create it
-	DIR* dir = opendir(local_dirname.c_str());
-	if (dir)
-	{
-    	// Directory exists --> nothing to do, just close it
-    	closedir(dir);
-	}
-	else if (ENOENT == errno)
-	{
     	// Directory does not exist --> create directory 
-    	mkdirectory(local_dirname.c_str());
-	}
-	else
-	{
+	if ( !mkdirectory(local_dirname.c_str()) ) {
     	// opendir() failed for some other reason --> report error and close program.
     	logger->warn("Could not open exisiting or create new local files folder.");
     	printf("Could not open exisiting or create new local files folder.");
