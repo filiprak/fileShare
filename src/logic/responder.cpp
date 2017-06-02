@@ -14,6 +14,7 @@
 #include <networkFileList.h>
 #include <localFileList.h>
 #include <console.h>
+#include <downloadMonitor.h>
 
 Responder::Responder(BlockingQueue< Message* >& q) : messq(q) {
 }
@@ -234,9 +235,12 @@ void responseDELFILEThread(MessageDELFILE* mess) {
 	try {
 		FileInfo f = mess->getDeletedFile();
 		bool res = netFileList.deleteFile( f.getName() );
-		localFileList.remove(f.getName());
-		std::string path = local_dirname + "/" + f.getName();
-		std::remove(path.c_str());
+
+		// stop all running transfers
+		logger->warn("{}: Stopping file transfer: '{}'",
+									__FUNCTION__, f.getName() );
+		dloadMonitor.stop_all(f.getName());
+		dloadMonitor.clear_all(f.getName());
 
 		if (!res)
 			logger->warn("{}: File: {} not deleted from network-list",
@@ -268,6 +272,13 @@ void responseLOCFILEThread(MessageLOCFILE* mess) {
 	try {
 		std::string f = mess->getLckFile();
 		bool res = netFileList.lockFile( f );
+
+		// stop all running transfers
+		logger->warn("{}: Stopping file transfer: '{}'",
+							__FUNCTION__, f );
+		dloadMonitor.stop_all(f);
+		dloadMonitor.clear_all(f);
+
 		if (!res)
 			logger->warn("{}: File: '{}' not locked (as requested) on network-list",
 					__FUNCTION__, f );
