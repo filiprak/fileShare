@@ -235,6 +235,10 @@ void responseDELFILEThread(MessageDELFILE* mess) {
 	try {
 		FileInfo f = mess->getDeletedFile();
 		bool res = netFileList.deleteFile( f.getName() );
+		localFileList.remove(f.getName());
+		// delete file from hd
+		std::string path = local_dirname + "/" + f.getName();
+		std::remove(path.c_str());
 
 		// stop all running transfers
 		logger->warn("{}: Stopping file transfer: '{}'",

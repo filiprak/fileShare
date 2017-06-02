@@ -245,7 +245,6 @@ void addFileThread(std::string filename) {
 }
 
 void deleteFileThread(std::string filename) {
-	std::string path = local_dirname + "/" + filename;
 
 	try {
 		Network network;
@@ -262,10 +261,14 @@ void deleteFileThread(std::string filename) {
 			netFileList.deleteFile(filename);
 			localFileList.remove(filename);
 
-			UI.info("File '%s' was deleted successfully", filename.c_str());
-		} else {
+			UI.info("File '%s' was deleted from the net", filename.c_str());
+		} else if (localFileList.contains(filename)) {
+			std::string path = local_dirname + "/" + filename;
+			localFileList.remove(filename);
+			std::remove(path.c_str());
+			UI.info("File '%s' was deleted from local set", filename.c_str());
+		} else
 			UI.error("File '%s' cannot be deleted", filename.c_str() );
-		}
 
 	} catch (std::exception& e) {
 		UI.error("Deleting file '%s': %s", filename.c_str(), e.what());
