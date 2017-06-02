@@ -32,7 +32,7 @@ OBJECTS = $(SOURCES:$(SRC_PATH)/%.$(SRC_EXT)=$(BUILD_PATH)/%.o)
 DEPS = $(OBJECTS:.o=.d)
 
 # flags #
-COMPILE_FLAGS = -std=c++11 -Wall -Wextra -g -m32
+COMPILE_FLAGS = -std=c++11 -m32
 LINKER_FLAGS = -lpthread -lncurses -m32
 INCLUDES = -I include/
 

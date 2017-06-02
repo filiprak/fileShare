@@ -41,7 +41,7 @@ public:
 	void broadcastUDP(Message* mess, int dest_port);
 	// connect and send tcp data
 	int fstreamTCP(int fd, unsigned long offset, unsigned long size,
-			const char* ipv4, int dest_port, unsigned send_timeout);
+			const char* ipv4, int dest_port, long send_timeout);
 
 	// open tcp listen socket on any free port
 	void listenTCP(const char* data, const char* ipv4, int* port, unsigned timeout);

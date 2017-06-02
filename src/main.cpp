@@ -77,7 +77,7 @@ void initLocalDirectory(char* nick)
 int main( int argc, char* argv[] ) {
 
 	if (argc < 3) {
-		printf(usage.c_str());
+		printf("%s", usage.c_str());
 		exit(0);
 	}
 
@@ -143,6 +143,8 @@ int main( int argc, char* argv[] ) {
 				UI.inputLoop();
 				usleep(5000);
 			}
+		} else {
+			printf("Nick '%s' is already in use :(\n", argv[2]);
 		}
 		// destroy ncurses windows
 		UI.exit();

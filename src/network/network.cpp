@@ -187,7 +187,7 @@ void Network::broadcastUDP(const char* data, int dest_port) {
 }
 
 int Network::fstreamTCP(int fd, unsigned long offset, unsigned long size,
-		const char* ipv4, int dest_port, unsigned send_timeout) {
+		const char* ipv4, int dest_port, long send_timeout) {
 
 	int tcpsock; // socket fd
 

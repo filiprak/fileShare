@@ -26,7 +26,7 @@ TCPlistener::TCPlistener() : port(-1), tcpsock(-1) {
 TCPlistener::~TCPlistener() {
 }
 
-void TCPlistener::init(unsigned accpt_timeout) {
+void TCPlistener::init(long accpt_timeout) {
 	if (transfering)
 		throw std::runtime_error( strError("TCP socket is listening now, attepmt to reinitialize existing socket",
 				__FUNCTION__) );
@@ -64,7 +64,7 @@ void TCPlistener::init(unsigned accpt_timeout) {
 	port = ntohs(addr.sin_port);
 }
 
-int TCPlistener::run(unsigned recv_timeout, unsigned long nr_bytes, std::string client_ipv4) {
+int TCPlistener::run(long recv_timeout, unsigned long nr_bytes, std::string client_ipv4) {
 	struct sockaddr_storage their_addr;
 	socklen_t addr_len = sizeof their_addr;
 	unsigned numbytes;

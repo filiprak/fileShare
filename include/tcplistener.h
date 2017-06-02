@@ -29,8 +29,8 @@ public:
 	TCPlistener();
 	virtual ~TCPlistener();
 
-	void init(unsigned accpt_timeout);
-	int run(unsigned recv_timeout, unsigned long nr_bytes, std::string client_ipv4);
+	void init(long accpt_timeout);
+	int run(long recv_timeout, unsigned long nr_bytes, std::string client_ipv4);
 	void stop();
 
 	int getPort() const {
