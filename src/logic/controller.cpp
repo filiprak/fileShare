@@ -397,10 +397,6 @@ void downloadFileThread(std::string filename) {
 				localFileList.add(filename);
 				UI.info("File '%s' was downloaded successfully", filename.c_str());
 				// merge temp files
-				for (int i = 0; i < temp_fnames.size(); ++i) {
-					UI.info("Merging: '%s' chunk of file '%s'",
-							temp_fnames[i].c_str(), filename.c_str());
-				}
 				std::string out_path = local_dirname + "/" + filename;
 				if(!mergeChunks(temp_fnames, out_path)) {
 					UI.error("While merging chunks of file '%s'", out_path.c_str());
