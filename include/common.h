@@ -35,7 +35,8 @@
 
 #define LOG_FILE_NAME			"fShare"
 #define TEMP_FILE_TEMPLATE		"fchunk_XXXXXX"
-#define LOCAL_FILES_DIRNAME		"local"
+#define LOCAL_FILES_DIRNAME				"fileShare"
+#define LOCAL_FILES_DIRNAME_TESTING		"local"
 
 // protocol message types
 typedef enum {

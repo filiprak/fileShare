@@ -23,6 +23,7 @@
 #include <exception>
 #include <string>
 #include <console.h>
+#include <dirent.h>
 #include "utilFunctions.h"
 #include "localFileList.h"
 
@@ -43,6 +44,36 @@ void initLogger(char* nick) {
 	logger->flush_on(spdlog::level::info);
 }
 
+void initLocalDirectory(char* nick)
+{
+	// assign local directory name
+	local_dirname = "/home/" + std::string(getlogin()) + "/" + 
+		std::string(LOCAL_FILES_DIRNAME) + "." + std::string(nick);
+
+	// for testing purposes --> create local file directory in shared folder
+	// local_dirname = std::string(LOCAL_FILES_DIRNAME_TESTING) + "." + std::string(argv[2]);
+
+	// try to open local files directory to check if it exists --> if not create it
+	DIR* dir = opendir(local_dirname.c_str());
+	if (dir)
+	{
+    	// Directory exists --> nothing to do, just close it
+    	closedir(dir);
+	}
+	else if (ENOENT == errno)
+	{
+    	// Directory does not exist --> create directory 
+    	mkdirectory(local_dirname.c_str());
+	}
+	else
+	{
+    	// opendir() failed for some other reason --> report error and close program.
+    	logger->warn("Could not open exisiting or create new local files folder.");
+    	printf("Could not open exisiting or create new local files folder.");
+    	exit(0);
+	}
+}
+
 int main( int argc, char* argv[] ) {
 
 	if (argc < 3) {
@@ -51,9 +82,7 @@ int main( int argc, char* argv[] ) {
 	}
 
 	initLogger(argv[2]);
-	//init local directory
-	local_dirname = std::string(LOCAL_FILES_DIRNAME) + "." + std::string(argv[2]);
-	mkdirectory(local_dirname.c_str());
+	initLocalDirectory(argv[2]);
 
 	logger->warn("Starting fileShare program..." );
 
