@@ -51,7 +51,7 @@ void initLocalDirectory(char* nick)
 		std::string(LOCAL_FILES_DIRNAME) + "." + std::string(nick);
 
 	// for testing purposes --> assign local file directory in shared folder
-	// local_dirname = std::string(LOCAL_FILES_DIRNAME_TESTING) + "." + std::string(argv[2]);
+	//local_dirname = std::string(LOCAL_FILES_DIRNAME_TESTING) + "." + std::string(nick);
 
 	// try to open local files directory to check if it exists --> if not create it
 	DIR* dir = opendir(local_dirname.c_str());
