@@ -40,7 +40,7 @@ void initLogger(char* nick) {
 	logger = spdlog::rotating_logger_mt("logger",
 			logfile.c_str(), 1048576 * 5, 3);
 
-	spdlog::set_pattern("[%H:%M:%S][thread %t]: %v");
+	spdlog::set_pattern("[%H:%M:%S.%e][thread %t][%l]: %v");
 	logger->flush_on(spdlog::level::info);
 }
 

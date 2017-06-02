@@ -20,6 +20,7 @@
 #include "networkFileList.h"
 #include "localFileList.h"
 #include "tcplistener.h"
+#include "downloadMonitor.h"
 
 Controller::Controller() {
 }
@@ -288,9 +289,6 @@ void downloadFileThread(std::string filename) {
 			if (f.getOwner() == Network::getMyNick()) {
 				UI.error("You can't download your file '%s'", filename.c_str() );
 				return;
-			} else if (f.isBlocked() || f.isRevoked()) {
-				UI.error("File '%s' is blocked or revoked", filename.c_str() );
-				return;
 			} else if (localFileList.contains(f.getName())) {
 				UI.error("File '%s' is already downloaded", filename.c_str() );
 				return;
@@ -350,6 +348,16 @@ void downloadFileThread(std::string filename) {
 			for (int i = 0; i < filt_mess_vect.size(); ++i)
 				tcplis.push_back(TCPlistener());
 
+			//check if we still can download file
+			bool all_downloaded = true;
+			if (dloadMonitor.isDownloading(filename)) {
+				UI.error("File '%s' is downloading at the moment", filename.c_str() );
+				goto clean_up;
+			} else if (f.isBlocked() || f.isRevoked()) {
+				UI.error("File '%s' is blocked or revoked", filename.c_str() );
+				goto clean_up;
+			}
+
 			for (int i = 0; i < filt_mess_vect.size(); ++i) {
 				MessageRESPFILE* m = filt_mess_vect[i];
 
@@ -366,7 +374,6 @@ void downloadFileThread(std::string filename) {
 			UI.info("Downloading '%s' file from %d peer(s)",
 								filename.c_str(), nr_peers);
 
-			bool all_downloaded = true;
 			if (future_vec.size() > 0)
 				for (int i = 0; i < future_vec.size(); ++i) {
 					bool res = future_vec[i].get();
@@ -399,6 +406,10 @@ void downloadFileThread(std::string filename) {
 			} else {
 				UI.error("File '%s' download failed", filename.c_str());
 			}
+
+			clean_up:
+			// tell download monitor that downloading terminated
+			dloadMonitor.clear_all(filename);
 
 			// clean chunks
 			for (int i = 0; i < temp_fnames.size(); ++i)
@@ -433,6 +444,9 @@ bool downloadChunkThread(unsigned long offset, unsigned long size, std::string f
 					tcplis.getPort(),
 					offset,
 					size);
+			// signal download menager
+			dloadMonitor.add(filename, &tcplis);
+
 			auto future = std::async(&TCPlistener::run,
 					&tcplis, TCP_RECV_TIMEOUT, size, std::ref(m->getSenderIpv4()) );
 

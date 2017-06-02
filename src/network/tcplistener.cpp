@@ -139,7 +139,7 @@ int TCPlistener::run(unsigned recv_timeout, unsigned long nr_bytes, std::string 
 			}
 			write(tmpfd, buffer, numbytes);
 			rest_data -= numbytes;
-		} while (rest_data > 0);
+		} while (rest_data > 0 && transfering);
 
 		//update nr bytes to receive next
 		nr_bytes -= nr_byt_to_read;
