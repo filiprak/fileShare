@@ -436,6 +436,8 @@ bool downloadChunkThread(unsigned long offset, unsigned long size, std::string f
 		int res = -1;
 		logger->info("Start downloading chunk of file: '{}'<<<<<", filename);
 		for (int tries = 0; tries < CHUNK_DOWNLD_TRIES; ++tries) {
+			logger->info("Try nr: {} downloading chunk of file: '{}'<<<<<", tries+1, filename);
+
 			tcplis.init(TCP_ACCEPT_TIMEOUT);
 			MessageREQFDATA reqdata(Network::getMyIpv4Addr(),
 					Network::getMyNick(),
@@ -453,13 +455,19 @@ bool downloadChunkThread(unsigned long offset, unsigned long size, std::string f
 			res = future.get();
 
 			if (res == 0) break;
-			logger->info("Try nr: {} downloading chunk of file: '{}'<<<<<", tries+1, filename);
+			std::remove(tcplis.getTempFile().c_str());
+
+			std::pair<bool, FileInfo> pair = netFileList.getFileInfo(filename);
+			FileInfo f = pair.second;
+			if (!pair.first) {
+				logger->warn("File '%s' is deleted", filename);
+				return false;
+			} else if (f.isBlocked() || f.isRevoked()) {
+				logger->warn("File '%s' is blocked or revoked", filename);
+				return false;
+			}
 		}
 		logger->info("Downloading file chunk: '{}' resulted:{}", tcplis.getTempFile(), res);
-
-		// clean if didnt succeded
-		if (res == -1)
-			std::remove(tcplis.getTempFile().c_str());
 
 		return (res == 0);
 

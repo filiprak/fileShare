@@ -51,7 +51,7 @@ bool mkdirectory(const char* dirname) {
 	bool res = true;
 
 	if (stat(dirname, &st) == -1) {
-	    res = (mkdir(dirname, 0644) == 0);
+	    res = (mkdir(dirname, 0777) == 0);
 	}
 	return res;
 }
