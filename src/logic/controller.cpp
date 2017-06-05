@@ -195,7 +195,7 @@ void showNetworkListThread(std::string filter) {
 		std::map< std::string, FileInfo > fmap = future.get();
 
 		std::string list = fileMapToString(filter, fmap);
-		UI.msg("Filelist:\n", "%s", list.c_str());
+		UI.msg("Files in the network:\n", "%s", list.c_str());
 
 	} catch (std::exception& e) {
 		UI.error("Updating list: %s", e.what());

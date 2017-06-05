@@ -38,6 +38,11 @@
 #define LOCAL_FILES_DIRNAME				"fileShare"
 #define LOCAL_FILES_DIRNAME_TESTING		"local"
 
+// file list print formats
+#define MAX_LINE_WIDTH	128
+#define FILELIST_FORMAT "%-32s%c%-16s%c%-16lu%c%-5d%-7d%c%-40s\n"
+#define HEADER_FORMAT "%-33s%-17s%-17s%-5s%-8s%-41s\n"
+
 // protocol message types
 typedef enum {
 	GREETING,
