@@ -23,8 +23,8 @@ std::map<std::string, FileInfo> jsonToFileMap(Json::Value& json) {
 	return map;
 }
 
-#define MAX_LINE_WIDTH	90
-#define FILELIST_FORMAT "%-20s%-20s%-20lu%-8d%-8d%-15f\n"
+#define MAX_LINE_WIDTH	128
+#define FILELIST_FORMAT "%20s%c%10s%c%8lu%c%4d%4d%c%30s\n"
 
 std::string fileMapToString(std::string& filter,
 		std::map<std::string, FileInfo>& filemap) {
@@ -36,13 +36,21 @@ std::string fileMapToString(std::string& filter,
 		FileInfo& f = i->second;
 		char line[MAX_LINE_WIDTH];
 		memset(line, 0, MAX_LINE_WIDTH);
+
+		time_t addTime = f.getAddTime();
+		char* dt = ctime(&addTime);
+		std::string saddTime;
+		if(dt != nullptr){
+			saddTime=std::string(dt);
+		}
+		char s = ' ';
 		snprintf(line, MAX_LINE_WIDTH, FILELIST_FORMAT,
-				f.getName().c_str(),
-				f.getOwner().c_str(),
-				f.getSize(),
+				f.getName().c_str(),s,
+				f.getOwner().c_str(),s,
+				f.getSize(),s,
 				f.isBlocked(),
-				f.isRevoked(),
-				f.getAddTime() );
+				f.isRevoked(),s,
+				saddTime.c_str() );
 
 		std::string line_str(line);
 
@@ -50,5 +58,5 @@ std::string fileMapToString(std::string& filter,
 			//continue;
 		result += line_str;
 	}
-	return netFileList.jsonify().toStyledString();
+	return result;
 }
