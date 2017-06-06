@@ -116,16 +116,14 @@ int main( int argc, char* argv[] ) {
 		if (validNick) {
 			responder.setRespondOnlyGreetings(false);
 
-			Network net;
-			MessageREQLIST req(Network::getMyIpv4Addr(), Network::getMyNick());
-			net.broadcastUDP(&req, LISTENER_PORT);
-
 			// run user interface
 			UI.msg("Welcome to fileShare !", "");
 			UI.msg("----------------------------------------------<<<", "");
 			UI.msg("Your IPv4 address: ", "%s", Network::getMyIpv4Addr());
 			UI.msg("Your nick: ", "%s", Network::getMyNick().c_str());
 			UI.msg("----------------------------------------------<<<", "");
+
+			synchrFiles();
 
 			while( UI.isRunning() ) {
 				UI.inputLoop();

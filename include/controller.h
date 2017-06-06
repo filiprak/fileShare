@@ -50,6 +50,9 @@ void sendListRequest();
 // greeting thread
 bool greetingThread(const char* nick);
 
+/* synchronize files on init */
+void synchrFiles();
+
 // show all files in network list
 void showNetworkListThread(std::string filter);
 

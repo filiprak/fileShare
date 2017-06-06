@@ -11,7 +11,7 @@
 //listener
 #define LISTENER_PORT			4950
 #define LISTENER_TIMEOUT		60*60 //seconds
-#define GREETING_TIMEOUT		5 //seconds
+#define GREETING_TIMEOUT		3 //seconds
 
 // main message queue
 #define MESS_QUEUE_SIZE 		256

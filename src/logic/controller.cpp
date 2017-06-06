@@ -13,6 +13,7 @@
 #include <message.h>
 #include <network.h>
 #include <queue>
+#include <map>
 #include <string>
 #include <future>
 #include <console.h>
@@ -158,6 +159,34 @@ bool greetingThread(const char* nick) {
 
 }
 
+void synchrFiles() {
+	UI.info("Synchronizing filesystem ... please wait...");
+	auto future = std::async( &NetworkFileList::getFileList, &netFileList );
+	//send update request
+	sendListRequest();
+	//wait for list update
+	std::map< std::string, FileInfo > fmap = future.get();
+
+	std::map< std::string, FileInfo >::iterator i;
+
+	for (i = fmap.begin(); i != fmap.end(); ++i) {
+		FileInfo& f = i->second;
+		if (f.getOwner() == Network::getMyNick() && !localFileList.contains(f.getName())) {
+			std::string path = local_dirname + "/" + f.getName();
+			if (fsize(path.c_str()) != -1) {
+				localFileList.add(i->first);
+			} else {
+				Network network;
+				MessageDELFILE msgdel(Network::getMyIpv4Addr(),
+										Network::getMyNick(), f);
+				network.broadcastUDP(&msgdel, LISTENER_PORT);
+				netFileList.deleteFile(i->first);
+				localFileList.remove(i->first);
+			}
+		}
+	}
+}
+
 void sendListRequest() {
 	UI.info("Synchronizing file list... please wait...");
 
@@ -171,6 +200,7 @@ void sendListRequest() {
 					greetLis.getPort() );
 
 	auto future = std::async( &UDPlistener::receiveMessage, &greetLis );
+	usleep(100000);
 	// broadcast greeting message
 	network.broadcastUDP( &greet, LISTENER_PORT );
 

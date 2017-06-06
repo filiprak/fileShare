@@ -20,7 +20,7 @@
 #include <utility>
 #include "logger.h"
 
-#define WAIT_FOR_UPDATE		10//seconds
+#define WAIT_FOR_UPDATE		5//seconds
 
 class NetworkFileList {
 private:
