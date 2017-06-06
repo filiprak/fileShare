@@ -40,6 +40,14 @@ public:
 		return true;
 	}
 
+	bool stop_downloading() {
+		std::unique_lock<std::mutex> lock(mux);
+		for (int i = 0; i < tcptasks.size(); ++i) {
+			tcptasks[i].second->stop();
+		}
+		return true;
+	}
+
 	bool clear_all(std::string filename) {
 		std::unique_lock<std::mutex> lock(mux);
 		std::vector< std::pair< std::string, TCPlistener* > >::iterator i;

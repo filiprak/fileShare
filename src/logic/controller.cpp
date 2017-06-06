@@ -45,6 +45,7 @@ void Controller::runCommand(std::string command) {
 	} else if (parsed[0] == COMMAND_EXIT) {
 		UI.info("Waiting for all threads to finish");
 		uloadMonitor.stop_all();
+		dloadMonitor.stop_downloading();
 		joinThreads();
 		UI.stop();
 
