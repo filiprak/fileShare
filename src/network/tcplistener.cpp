@@ -130,8 +130,9 @@ int TCPlistener::run(long recv_timeout, unsigned long nr_bytes, std::string clie
 		do {
 			memset(buffer, 0, MAX_CHUNK_SIZE);
 			numbytes = recv(readsock, buffer, rest_data, 0);
-			if (numbytes < 0 || !transfering) {
+			if ((numbytes < 0 || !transfering) ||(numbytes == 0 && rest_data > 0)) {
 				logger->error("TCP: recv error: {}, numbytes: {}", strerror(errno), numbytes);
+				transfering = false;
 				close(tcpsock);
 				close(readsock);
 				close(tmpfd);

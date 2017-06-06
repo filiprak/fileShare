@@ -26,6 +26,8 @@ private:
 	// local host nick - network-unique
 	static std::string my_nick;
 
+	bool uploading = false;
+
 public:
 
 	Network();
@@ -62,6 +64,10 @@ public:
 
 	static void setMyNick(const char* nick) {
 		my_nick = nick;
+	}
+
+	void stopUploading() {
+		uploading = false;
 	}
 };
 

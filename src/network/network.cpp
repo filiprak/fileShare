@@ -220,9 +220,10 @@ int Network::fstreamTCP(int fd, unsigned long offset, unsigned long size,
 
 	// stream file bytes
 	unsigned long nr_byt_to_send = size >= MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : size;
-	char* chunk_bytes[MAX_CHUNK_SIZE];
+	char chunk_bytes[MAX_CHUNK_SIZE];
 
-	while(nr_byt_to_send > 0) {
+	uploading = true;
+	while(nr_byt_to_send > 0 && uploading) {
 		memset(chunk_bytes, 0, MAX_CHUNK_SIZE);
 		if (pread(fd, chunk_bytes, nr_byt_to_send, offset) != nr_byt_to_send) {
 			logger->warn("{}: read() failed, errno msg: {}", __FUNCTION__, strerror(errno));
@@ -239,6 +240,7 @@ int Network::fstreamTCP(int fd, unsigned long offset, unsigned long size,
 		size -= nr_byt_to_send;
 		nr_byt_to_send = size >= MAX_CHUNK_SIZE ? MAX_CHUNK_SIZE : size;
 	}
+	uploading = false;
 	logger->info("TCP: all file chunk bytes sent sucessfully");
 	close(tcpsock);
 	return 0;

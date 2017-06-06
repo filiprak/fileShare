@@ -6,8 +6,12 @@
  */
 
 #include "downloadMonitor.h"
+#include "uploadMonitor.h"
 
 // dload monitor
 DownloadMonitor dloadMonitor;
+
+// upld monitor
+UploadMonitor uloadMonitor;
 
 

@@ -53,6 +53,8 @@ bool greetingThread(const char* nick);
 /* synchronize files on init */
 void synchrFiles();
 
+void stopUploading();
+
 // show all files in network list
 void showNetworkListThread(std::string filter);
 

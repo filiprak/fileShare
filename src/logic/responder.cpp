@@ -15,6 +15,7 @@
 #include <localFileList.h>
 #include <console.h>
 #include <downloadMonitor.h>
+#include <uploadMonitor.h>
 
 Responder::Responder(BlockingQueue< Message* >& q) : messq(q) {
 }
@@ -159,12 +160,14 @@ void responseREQFDATAThread(MessageREQFDATA* mess) {
 			if (fd == -1) {
 				logger->error("Failed open file '{}' data", mess->getRequestedFile());
 			} else { // stream file through tcp
+				uloadMonitor.add(mess->getRequestedFile(), &network);
 				int res = network.fstreamTCP(fd,
 						mess->getOffset(),
 						mess->getSize(),
 						mess->getSenderIpv4().c_str(),
 						mess->getWaitTcpPort(),
 						TCP_SEND_TIMEOUT);
+				uloadMonitor.clear_file(mess->getRequestedFile());
 				close(fd);
 				if (res == -1)
 					logger->error("Failed to send file '{}' data", mess->getRequestedFile());

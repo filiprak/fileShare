@@ -22,6 +22,7 @@
 #include "localFileList.h"
 #include "tcplistener.h"
 #include "downloadMonitor.h"
+#include "uploadMonitor.h"
 
 Controller::Controller() {
 }
@@ -43,6 +44,7 @@ void Controller::runCommand(std::string command) {
 
 	} else if (parsed[0] == COMMAND_EXIT) {
 		UI.info("Waiting for all threads to finish");
+		uloadMonitor.stop_all();
 		joinThreads();
 		UI.stop();
 
